@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Design tokens
+   Palette: navy text, cobalt accent, pale-blue surfaces.
+   Contrast on white: navy-900 16.8:1, slate-600 7.0:1, cobalt-600 5.9:1, cobalt-700 7.7:1.
+   Use slate-600 (not slate-500) for body text: slate-500 drops below 4.5:1 on mist surfaces.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-navy-950: #0a1426;
+  --color-navy-900: #101d35;
+  --color-navy-800: #1b2a47;
+  --color-navy-700: #2a3b5c;
+
+  --color-cobalt-50: #eef4ff;
+  --color-cobalt-100: #dce8ff;
+  --color-cobalt-200: #bed3ff;
+  --color-cobalt-300: #8fb2ff;
+  --color-cobalt-400: #5b8bfa;
+  --color-cobalt-500: #2f6bf3;
+  --color-cobalt-600: #1256ed;
+  --color-cobalt-700: #0d46c7;
+  --color-cobalt-800: #0f3a9e;
+
+  --color-mist: #f4f8ff;
+  --color-paper: #f8fafc;
+  --color-line: #e4e9f2;
+  --color-line-strong: #cfd8e6;
+
+  --color-slate-500: #64748b;
+  --color-slate-600: #4a5a70;
+  --color-slate-700: #36445a;
+
+  --color-success-50: #ecfdf3;
+  --color-success-700: #0f7a43;
+  --color-warning-50: #fff8e6;
+  --color-warning-200: #f6dc9b;
+  --color-warning-800: #7a4d00;
+  --color-danger-50: #fef2f2;
+  --color-danger-600: #c62828;
+  --color-danger-700: #a31c1c;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+
+  --shadow-soft: 0 1px 2px rgb(16 29 53 / 0.04), 0 4px 16px -4px rgb(16 29 53 / 0.08);
+  --shadow-card: 0 1px 2px rgb(16 29 53 / 0.05), 0 12px 32px -12px rgb(16 29 53 / 0.14);
+  --shadow-float: 0 2px 6px rgb(16 29 53 / 0.06), 0 24px 48px -16px rgb(18 86 237 / 0.22);
+  --shadow-cta: 0 8px 24px -8px rgb(18 86 237 / 0.55);
+
+  --breakpoint-xs: 25rem;
+  --breakpoint-3xl: 90rem;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-float: float 7s ease-in-out infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 6rem;
+  }
+
+  body {
+    @apply bg-white font-sans text-navy-900 antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    @apply bg-cobalt-100 text-navy-900;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-cobalt-600);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-navy-900;
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  summary {
+    cursor: pointer;
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-cobalt-700 uppercase;
+  }
+
+  /* Subtle dotted grid used behind hero/visual panels */
+  .bg-grid {
+    background-image: radial-gradient(rgb(18 86 237 / 0.12) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* Scroll reveal: content is visible by default; only hidden once JS has opted in. */
+  [data-reveal="pending"] {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  [data-reveal="shown"] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.7s var(--ease-out-soft),
+      transform 0.7s var(--ease-out-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-reveal="pending"] {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,88 @@
+AI tools have become remarkably capable, and it's easy to feel pressure to "do something with AI." But the businesses that get real value from it usually start smaller and more specific than the headlines suggest. This guide offers a practical framework for deciding where AI or automation is worth it — and where it isn't.
+
+## Separate automation from AI
+
+Not every efficiency problem needs a language model. It helps to think in three layers:
+
+- **Simple automation** — moving data between systems, sending notifications, generating documents from templates. Rules-based and predictable. Often the biggest, cheapest win.
+- **AI-assisted work** — tasks with messy inputs, like summarizing documents, classifying incoming requests, or drafting responses for a person to review.
+- **AI-driven decisions** — the model acts on its own. This needs the most care, the strongest evaluation, and is rarely the right starting point.
+
+If a clear rule can do the job, use the rule. It's cheaper, faster, and easier to trust.
+
+## Look for the right kind of task
+
+Good first candidates for AI-assisted automation tend to share a few traits:
+
+1. **High volume and repetitive.** The same kind of task happens many times a week.
+2. **Clear inputs and outputs.** You can describe what goes in (an email, a form, a document) and what should come out (a category, a summary, extracted fields).
+3. **Recoverable errors.** If the output is occasionally wrong, a person can catch and fix it without serious harm.
+4. **Existing examples.** You have past examples of the task done well that you can use to test the system.
+
+Tasks like triaging support requests, extracting data from invoices, drafting first-pass responses, or answering questions from internal documentation often fit this profile.
+
+Be more cautious with tasks involving legal, medical, financial, or employment decisions, or anything where an error is costly or hard to detect. Those may still benefit from AI, but they need stronger safeguards and usually a person making the final call.
+
+## Estimate the value honestly
+
+Before building anything, sketch a simple value estimate:
+
+- How many times does this task happen per week?
+- How long does it take a person today?
+- What share could realistically be automated or sped up — not in a demo, but with real, messy inputs?
+- What does an error cost, and how often might one slip through?
+
+Then compare that to the cost of building, running, and maintaining the system. AI systems carry ongoing costs — model usage, monitoring, and periodic re-evaluation — that should be part of the picture from day one.
+
+## Prototype and evaluate before you commit
+
+The most important habit in AI projects is evaluating against real examples before launch. A practical approach:
+
+1. **Collect a test set.** Gather a representative sample of real cases, including tricky ones, with the correct outcome for each. Handle any personal or sensitive data according to your policies.
+2. **Build a focused prototype.** Keep the scope narrow: one task, one workflow.
+3. **Measure.** How often is the output correct, partially correct, or wrong? Where does it fail?
+4. **Decide.** Is the quality good enough for the intended use, with the safeguards you plan to add?
+
+A prototype that looks impressive on a handful of hand-picked examples can behave very differently on a realistic sample. The test set keeps everyone honest.
+
+## Design guardrails into the workflow
+
+Good AI systems are designed around the assumption that the model will sometimes be wrong. Common guardrails include:
+
+- **Human review** for outputs that matter, with an easy way to correct and approve.
+- **Grounding in your own sources**, such as retrieving relevant documents and showing citations, so people can verify answers.
+- **Confidence thresholds**, routing uncertain cases to a person automatically.
+- **Access controls**, so the system only uses data the requesting user is allowed to see.
+- **Logging and monitoring** of quality, usage, and cost over time.
+
+## Take data handling seriously
+
+Before sending business data to any AI provider, understand:
+
+- Which provider and model will process the data, and under what terms.
+- Whether your data may be retained or used for training (many business API agreements exclude training, but check the specific terms).
+- Where data is stored and for how long.
+- Which data should never leave your systems at all.
+
+Document these decisions. Your customers, partners, or auditors may ask about them.
+
+## Plan for change
+
+Models, pricing, and capabilities change frequently. Build with that in mind: keep prompts and model choices configurable, keep your evaluation set up to date, and re-run it when you change anything significant. A system that worked well six months ago deserves a fresh check today.
+
+## A simple scorecard
+
+When evaluating a potential AI or automation project, score each item from 1 (weak) to 5 (strong):
+
+| Question | Score |
+| --- | --- |
+| The task is frequent and repetitive | 1–5 |
+| Inputs and desired outputs are clearly defined | 1–5 |
+| Errors are recoverable and detectable | 1–5 |
+| We have real examples to evaluate against | 1–5 |
+| Data handling requirements are understood | 1–5 |
+| The value clearly exceeds build and running costs | 1–5 |
+
+Projects that score well across the board are good candidates for a prototype. Low scores aren't necessarily a "no," but they point to what needs to be resolved first.
+
+If you're weighing a specific AI or automation idea, we're glad to help you evaluate it — including telling you when a simpler solution would serve you better.
