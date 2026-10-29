@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/site-config";
 import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import { Header, SkipLink } from "@/components/layout/header";
@@ -46,6 +47,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Footer />
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
+        {/* Vercel Web Analytics: cookieless, aggregated page views. Inactive outside Vercel deployments. */}
+        <Analytics />
       </body>
     </html>
   );

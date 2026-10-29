@@ -1,5 +1,6 @@
 /**
- * First-party, privacy-safe analytics hook. No third-party script is loaded.
+ * First-party, privacy-safe analytics hook for form outcomes. Page views are counted separately by Vercel Web
+ * Analytics (`<Analytics />` in the root layout); custom events there need a Vercel Pro plan, so these stay local.
  *
  * Events are dispatched as a `nextmade:analytics` DOM event and pushed to `window.dataLayer` only if a
  * consented tag manager has already created it. Properties must never contain personal data: no names,

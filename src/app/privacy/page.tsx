@@ -49,9 +49,13 @@ export default function PrivacyPage() {
         addresses temporarily to limit abusive form submissions.
       </p>
       <p>
-        <strong>Cookies and analytics.</strong> This website does not use advertising cookies, analytics, or
-        third-party tracking scripts. If that changes, we will update this policy first and ask for consent where
-        required.
+        <strong>Cookies and analytics.</strong> This website does not use cookies, advertising, or third-party tracking
+        scripts. To understand how the site is used, we use Vercel Web Analytics, provided by our hosting provider. It
+        sets no cookies and collects only anonymous, aggregated statistics: the page visited, the referring website,
+        an approximate location (country, region, city), and your browser, operating system, and device type. Visitors
+        are counted using a hash of the request that is discarded after 24 hours, so we can&apos;t identify you or
+        follow you across other websites. Nothing you type into our forms is sent to analytics. If we ever add
+        tracking that needs consent, we will update this policy first and ask for your consent.
       </p>
 
       <h2>How we use information, and why</h2>
@@ -82,7 +86,7 @@ export default function PrivacyPage() {
       <h2>Service providers</h2>
       <p>We use these providers to run the site and handle messages. They process information on our behalf, only as needed to provide their services:</p>
       <ul>
-        <li>Vercel — website hosting.</li>
+        <li>Vercel — website hosting and cookieless, aggregated website analytics.</li>
         <li>Upstash — secure storage of submitted inquiries and applications, so nothing is lost if email is delayed.</li>
         <li>Cloudflare — domain name services and routing of email sent to our addresses.</li>
         <li>Resend — sending form submissions to our team and confirmations back to you.</li>

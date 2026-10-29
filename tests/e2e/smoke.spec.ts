@@ -358,6 +358,8 @@ test.describe("legal and hiring terms", () => {
     await expect(page.locator("footer")).toContainText("Blossom Technologies LLC. All rights reserved.");
     await expect(page.locator("footer")).toContainText("NextMade is a brand of Blossom Technologies LLC.");
     await expect(page.locator("main")).toContainText("Blossom Technologies LLC, which operates NextMade");
+    await expect(page.locator("main")).toContainText("we use Vercel Web Analytics");
+    await expect(page.locator("main")).toContainText("sets no cookies");
     await page.goto("/terms");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("(Draft)");
     await expect(page.locator("main")).toContainText("operated by Blossom Technologies LLC, which operates NextMade");
