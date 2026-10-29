@@ -34,6 +34,8 @@ export default defineConfig({
       HUBSPOT_ACCESS_TOKEN: "",
       UPSTASH_REDIS_REST_URL: "",
       UPSTASH_REDIS_REST_TOKEN: "",
+      KV_REST_API_URL: "",
+      KV_REST_API_TOKEN: "",
       SUBMISSIONS_DIR: "test-results/e2e-submissions",
       INTAKE_RATE_LIMIT_MAX: "200",
     },

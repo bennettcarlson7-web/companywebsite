@@ -62,8 +62,9 @@ export function readIntakeEnv(env: Record<string, string | undefined> = process.
     submissionsDir:
       val(env.SUBMISSIONS_DIR)?.toLowerCase() === "off" ? undefined : (val(env.SUBMISSIONS_DIR) ?? (env.VERCEL ? undefined : ".data/submissions")),
     hubspotToken: val(env.HUBSPOT_ACCESS_TOKEN),
-    upstashUrl: val(env.UPSTASH_REDIS_REST_URL),
-    upstashToken: val(env.UPSTASH_REDIS_REST_TOKEN),
+    // Vercel's Storage tab ("Upstash for Redis") injects the KV_* names automatically; both spellings work.
+    upstashUrl: val(env.UPSTASH_REDIS_REST_URL) ?? val(env.KV_REST_API_URL),
+    upstashToken: val(env.UPSTASH_REDIS_REST_TOKEN) ?? val(env.KV_REST_API_TOKEN),
     rateLimitMax: Number(env.INTAKE_RATE_LIMIT_MAX ?? env.INQUIRY_RATE_LIMIT_MAX) > 0 ? Number(env.INTAKE_RATE_LIMIT_MAX ?? env.INQUIRY_RATE_LIMIT_MAX) : 5,
     rateLimitWindowMs:
       Number(env.INTAKE_RATE_LIMIT_WINDOW_SECONDS ?? env.INQUIRY_RATE_LIMIT_WINDOW_SECONDS) > 0

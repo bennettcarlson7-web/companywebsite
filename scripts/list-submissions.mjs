@@ -11,8 +11,8 @@ const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) || 20 : 50;
 const kinds = only === "applications" ? ["application"] : only === "inquiries" ? ["inquiry"] : ["application", "inquiry"];
 
 const val = (v) => (v && v.trim() ? v.trim() : undefined);
-const upstashUrl = val(process.env.UPSTASH_REDIS_REST_URL);
-const upstashToken = val(process.env.UPSTASH_REDIS_REST_TOKEN);
+const upstashUrl = val(process.env.UPSTASH_REDIS_REST_URL) ?? val(process.env.KV_REST_API_URL);
+const upstashToken = val(process.env.UPSTASH_REDIS_REST_TOKEN) ?? val(process.env.KV_REST_API_TOKEN);
 
 async function fromUpstash(kind) {
   const call = async (commands) => {

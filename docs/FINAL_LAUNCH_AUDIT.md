@@ -25,8 +25,8 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
 4. **Terms of Use are still a draft** (no governing-law state). The **Privacy Policy is now active**, with retention
    periods, providers, transfers, and rights. Counsel review is still recommended for EU/UK candidates.
 5. **Upstash is needed on Vercel.** It now does two jobs: durable storage of submissions (so one-click submit works on
-   the live site without email) and distributed rate limiting. Set `UPSTASH_REDIS_REST_URL`/`TOKEN` in Vercel before
-   launch. Locally, submissions are saved to `.data/submissions` and read with `npm run submissions`.
+   the live site without email) and distributed rate limiting. Easiest: Vercel → Storage → Upstash for Redis (injects
+   `KV_REST_API_URL`/`TOKEN`, which the site reads). Step-by-step: `docs/GO_LIVE.md`. Locally, submissions are saved to `.data/submissions` and read with `npm run submissions`.
 
 ## Checks
 

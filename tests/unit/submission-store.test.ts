@@ -42,6 +42,8 @@ describe("submission store configuration", () => {
     expect(createSubmissionStore(readIntakeEnv({ VERCEL: "1" }))).toBeUndefined();
     expect(createSubmissionStore(readIntakeEnv({}))?.name).toBe("file");
     expect(createSubmissionStore(readIntakeEnv({ UPSTASH_REDIS_REST_URL: "https://u.example", UPSTASH_REDIS_REST_TOKEN: "t" }))?.name).toBe("upstash");
+    // Names injected by Vercel's Storage → Upstash for Redis integration.
+    expect(createSubmissionStore(readIntakeEnv({ VERCEL: "1", KV_REST_API_URL: "https://kv.example", KV_REST_API_TOKEN: "t" }))?.name).toBe("upstash");
   });
 });
 

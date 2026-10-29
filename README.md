@@ -142,7 +142,7 @@ worked, they get an honest error, never a false confirmation.
 | Where it runs | Saved to | Read them with |
 | --- | --- | --- |
 | Local / any long-running server | `.data/submissions/applications.jsonl` and `inquiries.jsonl` (git-ignored, owner-only file permissions) | `npm run submissions` (`-- applications` or `-- inquiries`) |
-| Vercel (serverless) | Upstash Redis, when `UPSTASH_REDIS_REST_URL`/`TOKEN` are set. Kept for the Privacy Policy retention periods (TTL) | `npm run submissions` with the Upstash vars in `.env.local`, or the Upstash console |
+| Vercel (serverless) | Upstash Redis, when `UPSTASH_REDIS_REST_URL`/`TOKEN` (or Vercel Storage's `KV_REST_API_URL`/`TOKEN`) are set. Kept for the Privacy Policy retention periods (TTL) | `npm run submissions` with the Upstash vars in `.env.local`, or the Upstash console |
 
 On Vercel, set Upstash **or** email. With neither, there's nowhere durable to put a submission, so the form falls back
 to the "send by email" screen. `SUBMISSIONS_DIR` overrides the folder (`off` disables file storage).
