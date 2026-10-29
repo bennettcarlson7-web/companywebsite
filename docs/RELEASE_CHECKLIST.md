@@ -12,7 +12,7 @@ Legend: **PASS** = verified by an automated test or a direct check · **FAIL** =
 | --- | --- |
 | `npm run lint` | PASS (0 problems) |
 | `npm run typecheck` | PASS |
-| `npm run test` (Vitest) | PASS — 7 files, 61 tests |
+| `npm run test` (Vitest) | PASS — 8 files, 65 tests |
 | `npm run build` | PASS — 37 static pages + `/api/inquiry`, `/api/apply` |
 | `npx playwright test` (desktop + Pixel 7) | PASS — 113 passed, 9 skipped by design (viewport-specific) |
 
@@ -50,7 +50,9 @@ Legend: **PASS** = verified by an automated test or a direct check · **FAIL** =
 | Mobile menu dialog (open, Escape, navigate) | PASS | E2E (Pixel 7) |
 | No horizontal overflow at 375 / 768 / 1280 / 1440 | PASS | E2E, 6 key pages per width, plus all 25 routes at 1280 and Pixel 7 |
 | Lighthouse (lab, mobile emulation) | Measured — see `FINAL_LAUNCH_AUDIT.md` | A11y 100; Perf 57–67 on a slow test machine |
-| **Real email delivered to a company inbox** | **NOT TESTED — NOT VERIFIED, requires credentials** | No Resend key or verified sending domain available |
+| SMTP delivery via company mailbox (mocked transport) | PASS | `smtp-delivery.test.ts`: from = mailbox, to = inbox, reply-to = visitor; auth failure → error, logs only the code |
+| Email address not printed in main page content | PASS | E2E checks `main` on 8 pages; footer keeps one mailto |
+| **Real email delivered to a company inbox** | **NOT TESTED — NOT VERIFIED, requires credentials** | Mailbox password not available |
 | Upstash distributed rate limiting against a live Redis | NOT TESTED — requires credentials | Code path unit-tested only via the interface |
 | HubSpot contact creation | NOT TESTED — requires credentials | Mocked only |
 | Behavior on the live Vercel deployment | NOT TESTED — not deployed (owner approval required) | Live site still serves `version1.0` |

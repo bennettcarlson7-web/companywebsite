@@ -10,8 +10,8 @@ Last reviewed: Oct 28, 2026 (U.S. time).
 | # | Decision | Current default | Where to change |
 | --- | --- | --- | --- |
 | 1 | **Legal company name.** "Nextmade" is the site brand; the legal entity isn't confirmed. | Footer shows "© Nextmade". Policies say "Nextmade". | `siteConfig.legalName` in `src/lib/site-config.ts` |
-| 2 | **Nextmade vs. mentortech.space.** The published inbox (`rpatdu@mentortech.space`) uses a different domain from the brand. Is Nextmade a brand of MentorTech, a separate company, or a rename in progress? Customers and candidates may ask. | The email is shown as given; the site makes no claim about how the two are related. | `company` in `src/lib/site-config.ts`; consider a branded inbox (e.g. `hello@<nextmade domain>`) |
-| 3 | **Domain ownership and sending domain.** Which domain will send form notifications, and is it verified with Resend (SPF/DKIM/DMARC)? | Forms fail closed until `EMAIL_FROM` is on a verified domain. | `EMAIL_FROM` env var |
+| 2 | ~~**Nextmade vs. mentortech.space.**~~ **Resolved (owner, Oct 29, 2026):** the company is registered and `rpatdu@mentortech.space` is its work email. The address is used for delivery and email links; it is not printed in page content (footer only). The published inbox (`rpatdu@mentortech.space`) uses a different domain from the brand. Is Nextmade a brand of MentorTech, a separate company, or a rename in progress? Customers and candidates may ask. | The email is shown as given; the site makes no claim about how the two are related. | `company` in `src/lib/site-config.ts`; consider a branded inbox (e.g. `hello@<nextmade domain>`) |
+| 3 | **Mailbox password for SMTP delivery.** The site sends through the company mailbox on Namecheap Private Email (SPF already authorizes it). Consider adding a DMARC record. | Forms fall back to "email us" until `SMTP_PASSWORD` is set. | `.env.local` locally; Vercel env vars in production |
 | 4 | **Logo and brand mark.** The "N" mark is a placeholder created for this site. | Placeholder mark in use. | `src/components/ui/logo.tsx`, `src/app/icon.svg` |
 | 5 | **Business registration / postal address**, if required for your state or for CAN-SPAM-style disclosures. | Not shown anywhere. | Privacy/Terms pages, footer |
 | 6 | **Location statement**: "Remote-first, working with teams across the U.S." | Shown in footer and contact. | `siteConfig.locationStatement` |
@@ -43,7 +43,7 @@ Last reviewed: Oct 28, 2026 (U.S. time).
 
 | # | Decision | Current default |
 | --- | --- | --- |
-| 20 | **Response-time promise.** "Two business days" was removed because it wasn't approved. | "Every message is read by a person on our team, and we reply personally." |
+| 20 | **Response-time promise.** "Two business days" isn't used because it hasn't been approved. | "Every message is read by a person on our team, and we reply personally." |
 | 21 | **Booking link** (Cal.com/Calendly/etc.). | "Email us to request a call". Set `BOOKING_URL`. |
 | 22 | **Free intro call.** About says "a short, no-pressure conversation"; it doesn't say "free". Confirm if you want to promise that. | Neutral wording. |
 | 23 | **Budget ranges** offered in the inquiry form. | Under $25k / $25–50k / $50–100k / $100k+ / Not sure. |

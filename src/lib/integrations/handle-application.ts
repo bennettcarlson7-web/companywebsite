@@ -3,13 +3,15 @@ import { emailSubjects, siteConfig } from "@/lib/site-config";
 import { applicationFieldErrors, applicationSchema, type Application, type ApplicationResponse } from "@/lib/validation/job-application";
 import { isApplicationDeliveryConfigured, type IntakeEnv } from "./env";
 import type { RateLimiter } from "./rate-limit";
-import { renderNotificationHtml, sendEmail } from "./email";
+import { renderNotificationHtml, sendEmail, type SmtpSender } from "./email";
 import { DeliveredSubmissions, defaultLogger, guardSubmission, type Logger, type SubmissionRequest } from "./submission-guard";
 
 export type ApplicationDeps = {
   env: IntakeEnv;
   limiter: RateLimiter;
   fetchImpl?: typeof fetch;
+  /** Test hook: replaces the real SMTP transport. */
+  smtpSender?: SmtpSender;
   log?: Logger;
   delivered?: DeliveredSubmissions;
 };
@@ -82,7 +84,7 @@ export async function handleApplication(req: SubmissionRequest, deps: Applicatio
   }
 
   const { subject, html, text } = buildApplicationEmail(parsed.data);
-  const result = await sendEmail({ to: deps.env.hiringTo, replyTo: parsed.data.email, subject, html, text }, deps.env, deps.fetchImpl);
+  const result = await sendEmail({ to: deps.env.hiringTo, replyTo: parsed.data.email, subject, html, text }, deps.env, deps.fetchImpl, deps.smtpSender);
   if (!result.ok) {
     log({ outcome: "delivery_failure", failures: [result.detail ?? "email"], role: parsed.data.role });
     return { httpStatus: 502, body: { status: "error" } };

@@ -12,10 +12,11 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
 
 ## Top 5 launch blockers
 
-1. **Email delivery is unverified.** No Resend key or verified sending domain was available, so no real inquiry or
-   application has reached `rpatdu@mentortech.space`. Until that works, both forms fall back to "not sent — email
-   us", which is honest but adds friction. *Owner:* verify a sending domain, set `RESEND_API_KEY` + `EMAIL_FROM`,
-   send one test of each form.
+1. **Email delivery is unverified.** The site now sends through the company mailbox (Namecheap Private Email SMTP),
+   but no mailbox password was available here, so no real inquiry or application has reached
+   `rpatdu@mentortech.space`. Until it is set, both forms fall back to "we couldn't send it from the website — email
+   us", which is honest but adds friction. *Owner:* set `SMTP_PASSWORD` (`.env.local` and Vercel), then send one test
+   of each form.
 2. **Job postings lack legally required facts.** Location, employment type, and especially **pay ranges**
    (required in CO, CA, WA, NY, IL, and other jurisdictions for roles that can be filled there, including remote)
    are unknown. Don't promote the roles on job boards or social media until counsel confirms what each posting
@@ -32,7 +33,7 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
 
 | Check | Result | Evidence | Next action |
 | --- | --- | --- | --- |
-| Lint / typecheck / unit tests / build | PASS | `npm run check`: 0 lint problems, tsc clean, 61/61 tests, build OK | — |
+| Lint / typecheck / unit tests / build | PASS | `npm run check`: 0 lint problems, tsc clean, 65/65 tests, build OK | — |
 | E2E suite (desktop + Pixel 7) | PASS | 113 passed, 9 skipped by design | Run in CI on every PR |
 | All routes return 200 with one `h1` and a title | PASS | E2E "routes" (25 routes × 2 devices) | — |
 | Not-found states (page, service slug, job slug) | PASS | E2E: 404s | — |
@@ -51,8 +52,8 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
 | `from` controlled, `replyTo` = visitor/candidate | PASS (mocked provider) | Unit asserts the Resend request body | Re-verify headers in a real received email |
 | Success only after the provider accepts | PASS (mocked) | Unit: 2xx → sent; 4xx/5xx/network → error | — |
 | Unconfigured outcome is honest | PASS | E2E: 503 → "has not been sent" + prefilled mailto to the business inbox | — |
-| **End-to-end deliverability to a company inbox** | **NOT TESTED** | No credentials. **NOT VERIFIED — requires credentials.** | Owner: configure Resend + verified domain; submit both forms; confirm receipt, reply-to, and spam placement |
-| Sender domain verification documented | PASS | `.env.example`, README, OWNER_DECISIONS #3 | Owner action |
+| **End-to-end deliverability to a company inbox** | **NOT TESTED** | SMTP adapter unit-tested with a mocked transport (success, auth failure → error). No mailbox password here. **NOT VERIFIED — requires credentials.** | Owner: set `SMTP_PASSWORD`; submit both forms; confirm receipt, reply-to, and spam placement |
+| Sender domain alignment | PASS (DNS checked) | MX = mx1/mx2.privateemail.com; SPF `include:spf.privateemail.com`; no DMARC record found | Add a DMARC record (`p=none` to start) |
 | Abuse controls (honeypot, timing, origin, size, rate limit, dedupe) | PASS | Unit + E2E API guards | Configure Upstash for production |
 | Safe logs (no PII) | PASS | Unit logger spies (inquiry + application) | — |
 | No sensitive analytics | PASS | No third-party scripts; analytics events carry only outcome + role/project-type slugs | Add consent before adding any analytics tool |

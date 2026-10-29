@@ -46,11 +46,9 @@ function summaryText(i: Inquiry) {
 
 /** Customer project inquiry form. Posts to /api/inquiry; never shows success unless the server confirms delivery. */
 export function ProjectInquiryForm({
-  deliveryConfigured,
   contactEmail,
 }: {
-  /** Build-time hint so visitors know up front; the server response is authoritative. */
-  deliveryConfigured: boolean;
+  /** Used only behind "email us" links and the fallback; never printed on the page. */
   contactEmail: string;
 }) {
   const formId = useId();
@@ -115,12 +113,9 @@ export function ProjectInquiryForm({
 
   const showUnconfigured = status === "unconfigured" && submitted !== null;
   const emailFallback = (
-    <>
-      email us at{" "}
-      <a href={mailtoHref(contactEmail, emailSubjects.inquiry)} className="font-medium underline">
-        {contactEmail}
-      </a>
-    </>
+    <a href={mailtoHref(contactEmail, emailSubjects.inquiry)} className="font-medium underline">
+      email us instead
+    </a>
   );
 
   return (
@@ -137,20 +132,6 @@ export function ProjectInquiryForm({
         aria-describedby={fid("required-note")}
         className="relative space-y-6"
       >
-        {!deliveryConfigured && (
-          <div className="flex gap-3 rounded-xl border border-warning-200 bg-warning-50 p-4 text-sm text-warning-800">
-            <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-            <p>
-              <strong>Online delivery isn&apos;t switched on yet.</strong> The fastest way to reach us is email:{" "}
-              <a href={mailtoHref(contactEmail, emailSubjects.inquiry)} className="font-semibold underline">
-                {contactEmail}
-              </a>
-              . You can still fill in this form — we&apos;ll turn it into a ready-to-send email instead of pretending it
-              was sent.
-            </p>
-          </div>
-        )}
-
         <ErrorSummary summaryRef={summaryRef} idPrefix={formId} errors={errors} order={fieldOrder} labels={fieldLabels} />
         <RequiredNote id={fid("required-note")} />
 
@@ -281,10 +262,10 @@ function UnconfiguredPanel({
   return (
     <div ref={ref} tabIndex={-1} className="rounded-2xl bg-warning-50 p-6 ring-1 ring-warning-200 outline-none sm:p-8">
       <TriangleAlert aria-hidden="true" className="size-8 text-warning-800" />
-      <h2 className="mt-4 text-xl font-semibold">Your inquiry has not been sent</h2>
+      <h2 className="mt-4 text-xl font-semibold">We couldn&apos;t send your inquiry from the website</h2>
       <p className="mt-2 leading-relaxed text-warning-800">
-        Online delivery isn&apos;t switched on yet, so nothing was submitted. Your details are ready below — send them
-        to <strong>{contactEmail}</strong> with one click, or copy them into your own email.
+        Your inquiry has not been sent yet. Your details are ready below — send them to our team by email with one
+        click, or copy them into your own email.
       </p>
       <label htmlFor="inquiry-summary" className="mt-5 block text-sm font-semibold text-navy-900">
         Your project summary

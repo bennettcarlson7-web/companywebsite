@@ -5,7 +5,6 @@ import { ButtonLink } from "@/components/ui/button";
 import { IconTile } from "@/components/ui/icon";
 import { Container, Section, SectionHeader } from "@/components/ui/primitives";
 import { Reveal } from "@/components/ui/reveal";
-import { EmailContact } from "@/components/ui/email-contact";
 import { PageHero } from "@/components/sections/page-hero";
 import { CTASection } from "@/components/sections/cta-section";
 import { TeamCard } from "@/components/team/team-card";
@@ -148,10 +147,6 @@ export default function AboutPage() {
               </li>
             ))}
           </ol>
-          <div className="mt-10 rounded-2xl bg-white p-6 ring-1 ring-line sm:flex sm:items-center sm:justify-between sm:gap-6">
-            <p className="font-semibold text-navy-900">Prefer email? Write to us directly.</p>
-            <EmailContact email={siteConfig.contact.email} location="about" className="mt-2 sm:mt-0" />
-          </div>
         </Container>
       </Section>
 

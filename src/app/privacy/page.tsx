@@ -13,7 +13,7 @@ export default function PrivacyPage() {
   const holder = copyrightHolder();
   const mail = (subject: string) => (
     <a href={mailtoHref(email, subject)} className="font-medium text-cobalt-700 underline">
-      {email}
+      our team
     </a>
   );
   return (

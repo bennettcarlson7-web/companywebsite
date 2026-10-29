@@ -2,11 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { applyHref, engineeringValues, getJob, getJobs } from "@/content/jobs";
-import { emailSubjects, getCareersEmail } from "@/lib/site-config";
 import { buildMetadata, JsonLd, jobPostingJsonLd } from "@/lib/seo";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, CheckList, Container, Section } from "@/components/ui/primitives";
-import { EmailContact } from "@/components/ui/email-contact";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { JobFacts } from "@/components/careers/job-card";
 
@@ -142,13 +140,6 @@ export default async function JobPage({ params }: PageProps<"/careers/[slug]">) 
                 <ButtonLink href={applyHref(job.slug)} className="w-full" arrow>
                   Apply for This Role
                 </ButtonLink>
-                <p className="mt-4 text-sm text-slate-600">Prefer email?</p>
-                <EmailContact
-                  email={getCareersEmail()}
-                  subject={emailSubjects.application(job.title)}
-                  location={`job:${job.slug}`}
-                  className="mt-1"
-                />
               </div>
             </div>
           </aside>

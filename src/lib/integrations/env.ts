@@ -7,6 +7,11 @@ import { company } from "@/lib/site-config";
 
 export type IntakeEnv = {
   resendApiKey?: string;
+  /**
+   * SMTP delivery through the company's own mailbox (e.g. Namecheap Private Email:
+   * host mail.privateemail.com, port 465). Preferred over Resend when configured.
+   */
+  smtp?: { host: string; port: number; user: string; password: string };
   /** Controlled sender on a domain verified with the email provider. Visitors are only ever `replyTo`. */
   emailFrom?: string;
   /** Where project inquiries go. Defaults to the owner-supplied business inbox. */
@@ -24,9 +29,18 @@ const val = (v: string | undefined) => (v && v.trim() ? v.trim() : undefined);
 
 export function readIntakeEnv(env: Record<string, string | undefined> = process.env): IntakeEnv {
   const businessTo = val(env.BUSINESS_CONTACT_EMAIL) ?? val(env.INQUIRY_TO_EMAIL) ?? company.contactEmail;
+  const smtpHost = val(env.SMTP_HOST);
+  const smtpUser = val(env.SMTP_USER);
+  const smtpPassword = env.SMTP_PASSWORD; // not trimmed: passwords may legitimately contain spaces
+  const smtp =
+    smtpHost && smtpUser && smtpPassword
+      ? { host: smtpHost, port: Number(env.SMTP_PORT) > 0 ? Number(env.SMTP_PORT) : 465, user: smtpUser, password: smtpPassword }
+      : undefined;
   return {
     resendApiKey: val(env.RESEND_API_KEY),
-    emailFrom: val(env.EMAIL_FROM) ?? val(env.INQUIRY_FROM_EMAIL),
+    smtp,
+    // With SMTP, the mailbox itself is the sender unless EMAIL_FROM overrides the display name/address.
+    emailFrom: val(env.EMAIL_FROM) ?? val(env.INQUIRY_FROM_EMAIL) ?? (smtp ? `${company.displayName} Website <${smtp.user}>` : undefined),
     businessTo,
     hiringTo: val(env.HIRING_EMAIL) ?? businessTo,
     hubspotToken: val(env.HUBSPOT_ACCESS_TOKEN),
@@ -40,9 +54,9 @@ export function readIntakeEnv(env: Record<string, string | undefined> = process.
   };
 }
 
-/** Email needs a provider key AND a controlled sender; recipients have safe defaults. Fails closed. */
+/** Email needs a complete provider (SMTP mailbox, or Resend key + sender). Fails closed otherwise. */
 export function isEmailConfigured(env: IntakeEnv): boolean {
-  return Boolean(env.resendApiKey && env.emailFrom);
+  return Boolean(env.smtp || (env.resendApiKey && env.emailFrom));
 }
 
 export function isCrmConfigured(env: IntakeEnv): boolean {

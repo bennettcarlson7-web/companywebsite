@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getJobs } from "@/content/jobs";
-import { emailSubjects, getCareersEmail, siteConfig } from "@/lib/site-config";
+import { emailSubjects, getCareersEmail, mailtoHref, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
-import { isApplicationDeliveryConfigured } from "@/lib/integrations/env";
 import { Container, Section } from "@/components/ui/primitives";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { EmailContact } from "@/components/ui/email-contact";
 import { CandidateApplicationForm } from "@/components/forms/candidate-application-form";
 
 export const metadata = {
@@ -42,7 +40,7 @@ export default function ApplyPage() {
         <Container className="grid gap-10 lg:grid-cols-12">
           <div className="rounded-[1.75rem] bg-white p-6 shadow-card ring-1 ring-line sm:p-8 lg:col-span-8">
             <h2 className="mb-6 text-2xl font-semibold tracking-tight">Your application</h2>
-            <CandidateApplicationForm deliveryConfigured={isApplicationDeliveryConfigured()} hiringEmail={getCareersEmail()} />
+            <CandidateApplicationForm hiringEmail={getCareersEmail()} />
           </div>
 
           <aside className="space-y-6 lg:col-span-4">
@@ -75,7 +73,15 @@ export default function ApplyPage() {
             </div>
             <div className="rounded-2xl bg-white p-6 ring-1 ring-line">
               <h2 className="text-lg font-semibold">Questions first?</h2>
-              <EmailContact email={getCareersEmail()} subject={emailSubjects.careersQuestion} location="apply" className="mt-2" />
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <a
+                  href={mailtoHref(getCareersEmail(), emailSubjects.careersQuestion)}
+                  className="font-semibold text-cobalt-700 underline underline-offset-2"
+                >
+                  Email our hiring team
+                </a>{" "}
+                — we&apos;re happy to answer before you apply.
+              </p>
             </div>
             <Link href="/careers" className="inline-flex items-center gap-1.5 text-sm font-semibold text-cobalt-700 hover:underline">
               <ArrowLeft aria-hidden="true" className="size-4" />

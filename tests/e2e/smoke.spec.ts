@@ -111,12 +111,14 @@ test.describe("business facts as rendered", () => {
     for (const [, title] of JOBS) await expect(page.getByRole("heading", { name: title, level: 3 })).toBeVisible();
   });
 
-  test("the business email is a working mailto link on contact, careers, and in the footer", async ({ page }) => {
-    for (const path of ["/contact", "/careers", "/about"]) {
+  test("main content never prints the email address; email links and the footer still reach the inbox", async ({ page }) => {
+    for (const path of ["/", "/contact", "/careers", "/careers/talent-recruiter", "/careers/apply", "/about", "/privacy", "/terms"]) {
       await page.goto(path);
-      await expect(page.locator(`main a[href^="mailto:${EMAIL}"]`).first()).toBeVisible();
+      await expect(page.locator("main")).not.toContainText(EMAIL);
       await expect(page.locator(`footer a[href="mailto:${EMAIL}"]`)).toHaveCount(1);
     }
+    await page.goto("/careers");
+    await expect(page.getByRole("link", { name: "Email our hiring team" })).toHaveAttribute("href", new RegExp(`^mailto:${EMAIL}`));
   });
 
   test("concept projects are labeled as illustrative and not client work", async ({ page }) => {
@@ -157,7 +159,7 @@ test.describe("careers flow", () => {
 
   test("application: validation, then honest unconfigured fallback with role-specific email", async ({ page }) => {
     await page.goto("/careers/apply?role=senior-software-engineer-data-engineering");
-    await expect(page.getByText(/online applications aren.t switched on yet/i)).toBeVisible();
+    await expect(page.getByText(/switched on/i)).toHaveCount(0);
     await page.getByRole("button", { name: "Submit Application" }).click();
     const summary = page.getByRole("alert", { name: /please fix/i });
     await expect(summary).toBeFocused();
@@ -169,7 +171,7 @@ test.describe("careers flow", () => {
     await fillDelay(page);
     await page.getByRole("button", { name: "Submit Application" }).click();
 
-    await expect(page.getByRole("heading", { name: /application has not been sent/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /couldn.t send your application/i })).toBeVisible();
     await expect(page.getByText(/we received your application/i)).toHaveCount(0);
     const href = await page.getByRole("link", { name: "Send by Email" }).getAttribute("href");
     expect(decodeURIComponent(href!)).toContain(`mailto:${EMAIL}?subject=[Nextmade Careers] Senior Software Engineer — Data Engineering — Application`);
@@ -246,7 +248,7 @@ test.describe("project inquiry form", () => {
 
   test("in unconfigured mode, it never claims the inquiry was sent", async ({ page }) => {
     await page.goto("/contact");
-    await expect(page.getByText(/online delivery isn.t switched on yet/i)).toBeVisible();
+    await expect(page.getByText(/switched on/i)).toHaveCount(0);
     await page.getByLabel(/^Name/).fill("Jordan Rivera");
     await page.getByLabel("Work email").fill("jordan@example.com");
     await page.getByLabel("Project type").selectOption("mvp");
@@ -254,14 +256,14 @@ test.describe("project inquiry form", () => {
     await page.getByRole("checkbox").check();
     await fillDelay(page);
     await page.getByRole("button", { name: "Send Inquiry" }).click();
-    await expect(page.getByRole("heading", { name: /has not been sent/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /couldn.t send your inquiry/i })).toBeVisible();
     await expect(page.getByText(/we received your inquiry/i)).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Send by Email" })).toHaveAttribute("href", new RegExp(`^mailto:${EMAIL}`));
   });
 
   test("booking is not offered without a configured scheduler", async ({ page }) => {
     await page.goto("/contact");
-    await expect(page.getByText(/online booking isn.t available yet/i)).toBeVisible();
+    await expect(page.getByText(/isn.t available yet/i)).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Email us to request a call" })).toHaveAttribute("href", new RegExp(`^mailto:${EMAIL}`));
   });
 });

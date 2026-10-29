@@ -2,16 +2,14 @@ import Link from "next/link";
 import { Briefcase, MapPin, MessagesSquare } from "lucide-react";
 import { emailSubjects, mailtoHref, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
-import { isInquiryDeliveryConfigured } from "@/lib/integrations/env";
 import { Container, Section } from "@/components/ui/primitives";
-import { EmailContact } from "@/components/ui/email-contact";
 import { PageHero } from "@/components/sections/page-hero";
 import { ScheduleButton } from "@/components/sections/cta-section";
 import { ProjectInquiryForm } from "@/components/forms/project-inquiry-form";
 
 export const metadata = buildMetadata({
   title: "Contact Us — Tell Us About Your Project",
-  description: `Tell us about your idea or project. Use the form or email ${siteConfig.contact.email}, and we'll reply with questions, thoughts, and a practical next step.`,
+  description: "Tell us about your idea or project, and we'll reply with questions, thoughts, and a practical next step.",
   path: "/contact",
 });
 
@@ -29,13 +27,14 @@ export default function ContactPage() {
         crumbs={[{ label: "Contact", href: "/contact" }]}
         eyebrow="Contact"
         title="Let's build something great together"
-        intro="Tell us what you're working on. The more context you share, the more useful our first reply will be — but a few sentences is plenty to start."
-        aside={
-          <div className="rounded-2xl bg-white p-6 shadow-card ring-1 ring-line sm:p-7">
-            <h2 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">Email us directly</h2>
-            <EmailContact email={email} subject={emailSubjects.inquiry} location="contact-hero" className="mt-2 text-lg" />
-            <p className="mt-3 text-sm text-slate-600">{responseTime}</p>
-          </div>
+        intro={
+          <>
+            <p>
+              Tell us what you&apos;re working on. The more context you share, the more useful our first reply will be —
+              but a few sentences is plenty to start.
+            </p>
+            <p className="mt-3 text-base">{responseTime}</p>
+          </>
         }
       />
 
@@ -44,7 +43,7 @@ export default function ContactPage() {
           <div className="rounded-[1.75rem] bg-white p-6 shadow-card ring-1 ring-line sm:p-8 lg:col-span-8">
             <h2 className="text-2xl font-semibold tracking-tight">Project inquiry</h2>
             <p className="mt-2 mb-8 text-slate-600">No commitment required. We use your details only to respond to your inquiry — no mailing lists.</p>
-            <ProjectInquiryForm deliveryConfigured={isInquiryDeliveryConfigured()} contactEmail={email} />
+            <ProjectInquiryForm contactEmail={email} />
           </div>
 
           <aside className="space-y-6 lg:col-span-4">
@@ -64,14 +63,13 @@ export default function ContactPage() {
                 </>
               ) : (
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Online booking isn&apos;t available yet.{" "}
                   <a
                     href={mailtoHref(email, emailSubjects.callRequest, "Hi! I'd like to set up a short call about a project. A few times that work for me (with time zone):\n\n")}
                     className="font-semibold text-cobalt-700 underline underline-offset-2"
                   >
                     Email us to request a call
                   </a>{" "}
-                  and suggest a few times — we&apos;ll confirm by email.
+                  with a few times that work for you, and we&apos;ll send a calendar invite.
                 </p>
               )}
             </div>

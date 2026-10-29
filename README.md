@@ -90,7 +90,8 @@ See [.env.example](.env.example) for the full annotated list.
 | `NEXT_PUBLIC_ALLOW_INDEXING` | build | `true` to allow search engines (also requires the URL) |
 | `NEXT_PUBLIC_LINKEDIN_URL` / `_GITHUB_URL` / `_X_URL` | build | Footer social links (hidden when empty) |
 | `BOOKING_URL` | build (server) | Real booking link; without it, visitors are asked to request a call by email |
-| `RESEND_API_KEY`, `EMAIL_FROM` | server | Email delivery for both forms. **Both** are required, or the forms fail closed. `EMAIL_FROM` must be on a domain verified in Resend |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | server | **Recommended.** Send through the company mailbox (Namecheap Private Email: `mail.privateemail.com`, 465) |
+| `RESEND_API_KEY`, `EMAIL_FROM` | server | Alternative to SMTP. `EMAIL_FROM` must be on a domain verified in Resend; with SMTP it defaults to the mailbox |
 | `BUSINESS_CONTACT_EMAIL` | server | Inquiry recipient (default `rpatdu@mentortech.space`) |
 | `HIRING_EMAIL` | server | Application recipient (default: the business inbox) |
 | `HUBSPOT_ACCESS_TOKEN` | server | Optional: also create a HubSpot contact for **project inquiries only** |
@@ -118,11 +119,11 @@ rate limit → honeypot and minimum fill time → submission-ID dedupe), then di
 | Subject | `[Nextmade Inquiry] <type> — <name>` | `[Nextmade Careers] <role> — Application` |
 | Analytics event | `project_inquiry_submitted` (outcome, project type) | `job_application_submitted` (outcome, role slug) |
 
-- **Configured:** the visitor sees "received" only after Resend accepts the message (2xx). Failures say "not sent"
+- **Configured:** the visitor sees "received" only after the mail server (SMTP) or Resend accepts the message. Failures say "not sent"
   and keep the input. `from` is always `EMAIL_FROM`; the visitor or candidate is only `reply_to`.
 - **Unconfigured (fails closed):** the API returns `503 { status: "unconfigured" }`, and the form says nothing was
-  sent and offers a one-click prefilled email to the right inbox plus a copyable summary. A notice above each form
-  says so up front, and it disappears automatically once delivery is configured and redeployed.
+  sent and offers a one-click prefilled email to the right inbox plus a copyable summary. The email address itself
+  is not printed in page content (only the footer shows it).
 - **Logging:** outcome codes only (plus the role slug for applications), never names, emails, links, or text.
 - **Analytics:** no third-party scripts. Events are dispatched as `nextmade:analytics` DOM events (and pushed to
   `window.dataLayer` only if a consented tag manager creates it), without personal data.
@@ -130,15 +131,27 @@ rate limit → honeypot and minimum fill time → submission-ID dedupe), then di
 **Rate limiting on serverless:** without Upstash, counts live in each serverless instance's memory and reset on
 cold starts, which isn't real protection. Configure Upstash Redis before enabling delivery.
 
-### Enabling email (Resend)
+### Enabling email delivery
 
-1. Verify a sending domain in Resend (adds SPF/DKIM DNS records). Owner decision: which domain (see
-   `docs/OWNER_DECISIONS.md` #2–3).
-2. Create an API key with sending permission.
-3. In Vercel, set `RESEND_API_KEY` and `EMAIL_FROM` (e.g. `Nextmade Website <website@yourdomain.com>`); optionally
-   `HIRING_EMAIL`. Redeploy.
-4. Submit one project inquiry and one application. Confirm both arrive at `rpatdu@mentortech.space`, that Reply goes
-   to the submitter, and that they don't land in spam. Then update `docs/FINAL_LAUNCH_AUDIT.md`.
+**Recommended: the company mailbox over SMTP.** `mentortech.space` is hosted on Namecheap Private Email, and its SPF
+record already authorizes Private Email's servers, so notifications sent this way are well aligned for
+deliverability.
+
+1. Local: open `.env.local` (git-ignored; host, port, and user are pre-filled) and set `SMTP_PASSWORD` to the
+   mailbox password. Restart the server.
+2. Production (Vercel → Project → Settings → Environment Variables): set `SMTP_HOST=mail.privateemail.com`,
+   `SMTP_PORT=465`, `SMTP_USER=rpatdu@mentortech.space`, and `SMTP_PASSWORD` (mark it Sensitive). Redeploy.
+3. Submit one project inquiry and one application. Confirm both arrive at `rpatdu@mentortech.space`, that Reply goes
+   to the submitter, and that they aren't in spam.
+
+Notifications are sent *from* the mailbox (shown as "Nextmade Website"), *to* the business/hiring inbox, with
+*Reply-To* set to the visitor or candidate.
+
+**Alternative: Resend.** Verify a sending domain in Resend, then set `RESEND_API_KEY` and `EMAIL_FROM`. Resend is
+used only when SMTP isn't configured.
+
+If neither is configured, or the mail server rejects a message, the visitor sees "we couldn't send your
+inquiry/application from the website" with a one-click prefilled email instead. Never a false confirmation.
 ## SEO
 
 - Per-page metadata via `buildMetadata()`, title template, Open Graph/Twitter cards, and a generated default OG

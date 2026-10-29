@@ -1,7 +1,7 @@
 import { inquiryFieldErrors, inquirySchema, type InquiryResponse } from "@/lib/validation/project-inquiry";
 import { isCrmConfigured, isEmailConfigured, type IntakeEnv } from "./env";
 import type { RateLimiter } from "./rate-limit";
-import { sendEmail, type DeliveryResult } from "./email";
+import { sendEmail, type DeliveryResult, type SmtpSender } from "./email";
 import { buildInquiryEmail, sendInquiryToHubSpot } from "./deliver";
 import { DeliveredSubmissions, defaultLogger, guardSubmission, type Logger, type SubmissionRequest } from "./submission-guard";
 
@@ -9,6 +9,8 @@ export type InquiryDeps = {
   env: IntakeEnv;
   limiter: RateLimiter;
   fetchImpl?: typeof fetch;
+  /** Test hook: replaces the real SMTP transport. */
+  smtpSender?: SmtpSender;
   log?: Logger;
   delivered?: DeliveredSubmissions;
 };
@@ -39,7 +41,7 @@ export async function handleInquiry(req: SubmissionRequest, deps: InquiryDeps): 
   const channels: Promise<DeliveryResult>[] = [];
   if (isEmailConfigured(deps.env)) {
     const { subject, html, text } = buildInquiryEmail(parsed.data);
-    channels.push(sendEmail({ to: deps.env.businessTo, replyTo: parsed.data.email, subject, html, text }, deps.env, deps.fetchImpl));
+    channels.push(sendEmail({ to: deps.env.businessTo, replyTo: parsed.data.email, subject, html, text }, deps.env, deps.fetchImpl, deps.smtpSender));
   }
   if (isCrmConfigured(deps.env)) channels.push(sendInquiryToHubSpot(parsed.data, deps.env, deps.fetchImpl));
 

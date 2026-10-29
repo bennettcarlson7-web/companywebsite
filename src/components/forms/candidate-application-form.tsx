@@ -55,7 +55,8 @@ const subscribe = (cb: () => void) => {
 const getSearch = () => window.location.search;
 const getServerSearch = () => "";
 
-export function CandidateApplicationForm({ deliveryConfigured, hiringEmail }: { deliveryConfigured: boolean; hiringEmail: string }) {
+/** `hiringEmail` is used only behind "email" links and the fallback; it's never printed on the page. */
+export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string }) {
   const formId = useId();
   const summaryRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -130,12 +131,9 @@ export function CandidateApplicationForm({ deliveryConfigured, hiringEmail }: { 
 
   const showUnconfigured = status === "unconfigured" && submitted !== null;
   const emailFallback = (
-    <>
-      email your application to{" "}
-      <a href={mailtoHref(hiringEmail, applicationEmailSubject(role))} className="font-medium underline">
-        {hiringEmail}
-      </a>
-    </>
+    <a href={mailtoHref(hiringEmail, applicationEmailSubject(role))} className="font-medium underline">
+      email your application instead
+    </a>
   );
 
   return (
@@ -151,20 +149,6 @@ export function CandidateApplicationForm({ deliveryConfigured, hiringEmail }: { 
         aria-describedby={fid("required-note")}
         className="relative space-y-6"
       >
-        {!deliveryConfigured && (
-          <div className="flex gap-3 rounded-xl border border-warning-200 bg-warning-50 p-4 text-sm text-warning-800">
-            <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-            <p>
-              <strong>Online applications aren&apos;t switched on yet.</strong> Please email{" "}
-              <a href={mailtoHref(hiringEmail, applicationEmailSubject(role))} className="font-semibold underline">
-                {hiringEmail}
-              </a>{" "}
-              with the role in the subject line. You can still fill in this form — we&apos;ll turn it into a ready-to-send
-              email instead of pretending it was sent.
-            </p>
-          </div>
-        )}
-
         <ErrorSummary summaryRef={summaryRef} idPrefix={formId} errors={errors} order={fieldOrder} labels={fieldLabels} />
         <RequiredNote id={fid("required-note")} />
 
@@ -296,10 +280,10 @@ function UnconfiguredPanel({
   return (
     <div ref={resultRef} tabIndex={-1} className="rounded-2xl bg-warning-50 p-6 ring-1 ring-warning-200 outline-none sm:p-8">
       <TriangleAlert aria-hidden="true" className="size-8 text-warning-800" />
-      <h2 className="mt-4 text-xl font-semibold">Your application has not been sent</h2>
+      <h2 className="mt-4 text-xl font-semibold">We couldn&apos;t send your application from the website</h2>
       <p className="mt-2 leading-relaxed text-warning-800">
-        Online applications aren&apos;t switched on yet, so nothing was submitted. Your details are ready below — send
-        them to <strong>{hiringEmail}</strong> with one click, or copy them into your own email.
+        Your application has not been sent yet. Your details are ready below — send them to our hiring team by email
+        with one click, or copy them into your own email.
       </p>
       <label htmlFor="application-summary" className="mt-5 block text-sm font-semibold text-navy-900">
         Your application summary

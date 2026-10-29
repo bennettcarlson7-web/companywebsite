@@ -7,8 +7,7 @@
  */
 export type AnalyticsEvent =
   | { name: "project_inquiry_submitted"; props: { outcome: string; projectType?: string } }
-  | { name: "job_application_submitted"; props: { outcome: string; role?: string } }
-  | { name: "email_copied"; props: { location: string } };
+  | { name: "job_application_submitted"; props: { outcome: string; role?: string } };
 
 declare global {
   interface Window {

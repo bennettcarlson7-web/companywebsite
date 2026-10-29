@@ -30,26 +30,26 @@ describe("ProjectInquiryForm", () => {
   it("shows an error summary when submitted empty, without calling the server", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<ProjectInquiryForm deliveryConfigured contactEmail={EMAIL} />);
+    render(<ProjectInquiryForm contactEmail={EMAIL} />);
     await user.click(screen.getByRole("button", { name: /send inquiry/i }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/please fix 5 problems/i);
     expect(screen.getByLabelText(/work email/i)).toHaveAttribute("aria-invalid", "true");
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
-  it("offers direct email up front when delivery isn't configured", () => {
-    render(<ProjectInquiryForm deliveryConfigured={false} contactEmail={EMAIL} />);
-    expect(screen.getByText(/online delivery isn.t switched on yet/i)).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: EMAIL })[0]).toHaveAttribute("href", expect.stringMatching(/^mailto:rpatdu@mentortech\.space\?subject=/));
+  it("shows no delivery banner and never prints the email address", () => {
+    const { container } = render(<ProjectInquiryForm contactEmail={EMAIL} />);
+    expect(screen.queryByText(/switched on/i)).not.toBeInTheDocument();
+    expect(container.textContent).not.toContain(EMAIL);
   });
 
   it("never shows success when the server is unconfigured, and offers a prefilled email", async () => {
     mockFetch(503, { status: "unconfigured" });
     const user = userEvent.setup();
-    render(<ProjectInquiryForm deliveryConfigured={false} contactEmail={EMAIL} />);
+    render(<ProjectInquiryForm contactEmail={EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /send inquiry/i }));
-    expect(await screen.findByRole("heading", { name: /has not been sent/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /couldn.t send your inquiry/i })).toBeInTheDocument();
     expect(screen.queryByText(/we received your inquiry/i)).not.toBeInTheDocument();
     expect((screen.getByLabelText(/your project summary/i) as HTMLTextAreaElement).value).toContain("Name: Jordan Rivera");
     const mail = screen.getByRole("link", { name: /send by email/i }).getAttribute("href")!;
@@ -60,7 +60,7 @@ describe("ProjectInquiryForm", () => {
   it("keeps what was typed when going back to edit", async () => {
     mockFetch(503, { status: "unconfigured" });
     const user = userEvent.setup();
-    render(<ProjectInquiryForm deliveryConfigured={false} contactEmail={EMAIL} />);
+    render(<ProjectInquiryForm contactEmail={EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /send inquiry/i }));
     await user.click(await screen.findByRole("button", { name: /edit details/i }));
@@ -70,7 +70,7 @@ describe("ProjectInquiryForm", () => {
   it("confirms only after the server confirms delivery, and posts to the inquiry endpoint", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<ProjectInquiryForm deliveryConfigured contactEmail={EMAIL} />);
+    render(<ProjectInquiryForm contactEmail={EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /send inquiry/i }));
     expect(await screen.findByText(/we received your inquiry/i)).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe("ProjectInquiryForm", () => {
   it("explains failures, keeps the form, and reuses the submission ID on retry", async () => {
     const fetchFn = mockFetch(502, { status: "error" });
     const user = userEvent.setup();
-    render(<ProjectInquiryForm deliveryConfigured contactEmail={EMAIL} />);
+    render(<ProjectInquiryForm contactEmail={EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /send inquiry/i }));
     await waitFor(() => expect(screen.getByText(/was not sent/i)).toBeInTheDocument());
@@ -105,20 +105,20 @@ describe("CandidateApplicationForm", () => {
 
   it("preselects the role from ?role= in the URL", () => {
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
-    render(<CandidateApplicationForm deliveryConfigured hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
     expect(screen.getByLabelText(/^role/i)).toHaveValue("talent-recruiter");
   });
 
   it("ignores unknown roles in the URL", () => {
     window.history.replaceState({}, "", "/careers/apply?role=chief-wizard");
-    render(<CandidateApplicationForm deliveryConfigured hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
     expect(screen.getByLabelText(/^role/i)).toHaveValue("");
   });
 
   it("validates required fields and link safety before sending", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm deliveryConfigured hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
     await user.type(screen.getByLabelText(/portfolio or github/i), "javascript:alert(1)");
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     const summary = await screen.findByRole("alert");
@@ -131,7 +131,7 @@ describe("CandidateApplicationForm", () => {
     window.history.replaceState({}, "", "/careers/apply?role=senior-software-engineer-ai-ml");
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm deliveryConfigured hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByText(/we received your application/i)).toBeInTheDocument();
@@ -144,11 +144,10 @@ describe("CandidateApplicationForm", () => {
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
     mockFetch(503, { status: "unconfigured" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm deliveryConfigured={false} hiringEmail={EMAIL} />);
-    expect(screen.getByText(/online applications aren.t switched on yet/i)).toBeInTheDocument();
+    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
-    expect(await screen.findByRole("heading", { name: /application has not been sent/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /couldn.t send your application/i })).toBeInTheDocument();
     expect(screen.queryByText(/we received your application/i)).not.toBeInTheDocument();
     const href = decodeURIComponent(screen.getByRole("link", { name: /send by email/i }).getAttribute("href")!);
     expect(href).toContain("mailto:rpatdu@mentortech.space?subject=[Nextmade Careers] Talent Recruiter — Application");
@@ -158,7 +157,7 @@ describe("CandidateApplicationForm", () => {
     mockFetch(502, { status: "error" });
     const user = userEvent.setup();
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
-    render(<CandidateApplicationForm deliveryConfigured hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByText(/your application was not sent/i)).toBeInTheDocument();

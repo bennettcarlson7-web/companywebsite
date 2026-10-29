@@ -1,10 +1,9 @@
 import { candidateFaqs, engineeringValues, getJobs } from "@/content/jobs";
-import { emailSubjects, getCareersEmail, siteConfig } from "@/lib/site-config";
+import { emailSubjects, getCareersEmail, mailtoHref, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
 import { ButtonLink } from "@/components/ui/button";
 import { Container, Section, SectionHeader } from "@/components/ui/primitives";
 import { Reveal } from "@/components/ui/reveal";
-import { EmailContact } from "@/components/ui/email-contact";
 import { PageHero } from "@/components/sections/page-hero";
 import { FAQAccordion } from "@/components/sections/faq";
 import { JobCard } from "@/components/careers/job-card";
@@ -79,8 +78,16 @@ export default function CareersPage() {
           <div className="lg:col-span-4">
             <SectionHeader id="candidate-faq-heading" eyebrow="FAQ" title="Questions from candidates" />
             <div className="mt-6 space-y-2 text-sm text-slate-600">
-              <p>Have a question before applying? Email us:</p>
-              <EmailContact email={getCareersEmail()} subject={emailSubjects.careersQuestion} location="careers" />
+              <p>
+                Have a question before applying?{" "}
+                <a
+                  href={mailtoHref(getCareersEmail(), emailSubjects.careersQuestion)}
+                  className="font-semibold text-cobalt-700 underline underline-offset-2"
+                >
+                  Email our hiring team
+                </a>
+                .
+              </p>
             </div>
           </div>
           <div className="lg:col-span-8">

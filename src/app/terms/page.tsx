@@ -80,9 +80,9 @@ export default function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        Questions about these terms? Email{" "}
+        Questions about these terms?{" "}
         <a href={mailtoHref(siteConfig.contact.email, `Terms question — ${siteConfig.name}`)} className="font-medium text-cobalt-700 underline">
-          {siteConfig.contact.email}
+          Email our team
         </a>{" "}
         or use the{" "}
         <Link href="/contact" className="font-medium text-cobalt-700 underline">
