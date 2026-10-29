@@ -68,6 +68,6 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
 | Performance (lab) | Measured — below target in lab | Lighthouse 12, mobile emulation on this machine (CPU benchmark index 592, i.e. slow hardware with 4× throttling on top): Performance 57 (home) / 67 (careers) / 63 (contact); CLS 0; LCP 3.5–4.0 s; TBT 1.2–1.8 s, mostly the Next.js framework runtime. 198 KB JS (compressed). | Re-run Lighthouse on typical hardware and collect field Core Web Vitals after deploy; investigate trimming client JS if LCP stays above 2.5 s |
 | Lighthouse SEO | 63 (expected) | Penalized only by the intentional `noindex` | Re-check after enabling indexing |
 | Publication dates not in the future | PASS | Articles now Oct 28, 2026; unit test enforces U.S. Pacific date | — |
-| No contradictory "hiring closed" / "forms don't work" messaging | PASS | E2E: no "No open roles". Forms say delivery isn't switched on, which is currently true; the banner disappears automatically once configured | — |
+| No contradictory "hiring closed" / "forms don't work" messaging | PASS | E2E: no "No open roles", no "switched on" banner. A failed send says "We couldn't send … from the website" and offers a prefilled email | — |
 | Privacy/Terms placeholders | FAIL (expected drafts) | Bracketed items remain; pages labeled Draft | Counsel review (blocker #4) |
 | Deployment | NOT TESTED (by policy) | Nothing pushed or deployed; Vercel env not inspectable from here | Owner approval → push branch → preview deploy → re-run this audit on the preview URL |

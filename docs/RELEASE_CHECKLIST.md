@@ -28,7 +28,7 @@ Legend: **PASS** = verified by an automated test or a direct check · **FAIL** =
 | Three job detail pages, prerendered | PASS | Build output; E2E routes |
 | Apply link preselects role; back navigation returns to job page | PASS | E2E "careers flow" (all 3 roles) |
 | Unknown job slug → 404 | PASS | E2E |
-| Business email `rpatdu@mentortech.space` as `mailto:` on contact, careers, about, footer, job pages | PASS | E2E "business email is a working mailto link" |
+| Business email `rpatdu@mentortech.space` reachable via `mailto:` links ("Email our hiring team", footer) without printing the address in page content | PASS | E2E "business email is a working mailto link" |
 | Separate schemas, handlers, endpoints, rate-limit buckets, subjects | PASS | `handle-application.test.ts` (cross-payload rejected; separate buckets); E2E API cross-payload 422 |
 | No false success when unconfigured (both forms) | PASS | Unit (component + handler) and E2E: 503 `unconfigured` → "has not been sent" + prefilled email |
 | No false success when the provider fails or is unreachable | PASS | Unit: Resend 500/422 and network error → "was not sent" |
