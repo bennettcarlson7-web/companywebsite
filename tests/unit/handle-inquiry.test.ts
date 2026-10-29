@@ -30,10 +30,17 @@ function deps(env = unconfigured, fetchImpl?: typeof fetch) {
 const okFetch = () => vi.fn(async () => new Response(JSON.stringify({ id: "1" }), { status: 200 }));
 
 describe("readIntakeEnv", () => {
-  it("routes to the owner-supplied business inbox by default and fails closed without a key and sender", () => {
-    expect(unconfigured.businessTo).toBe("rpatdu@mentortech.space");
-    expect(unconfigured.hiringTo).toBe("rpatdu@mentortech.space");
-    expect(readIntakeEnv({ RESEND_API_KEY: "re_x" }).emailFrom).toBeUndefined();
+  it("routes inquiries to hello@ and applications to careers@ on the company domain by default", () => {
+    expect(unconfigured.businessTo).toBe("hello@nextmadelabs.com");
+    expect(unconfigured.hiringTo).toBe("careers@nextmadelabs.com");
+    expect(unconfigured.emailFrom).toBeUndefined();
+    expect(unconfigured.sendConfirmations).toBe(false);
+  });
+
+  it("sends as notifications@nextmadelabs.com with Resend unless EMAIL_FROM overrides it", () => {
+    expect(readIntakeEnv({ RESEND_API_KEY: "re_x" }).emailFrom).toBe("Nextmade <notifications@nextmadelabs.com>");
+    expect(readIntakeEnv({ RESEND_API_KEY: "re_x", EMAIL_FROM: "Team <team@nextmadelabs.com>" }).emailFrom).toBe("Team <team@nextmadelabs.com>");
+    expect(readIntakeEnv({ SEND_CONFIRMATION_EMAILS: "TRUE" }).sendConfirmations).toBe(true);
   });
 });
 
@@ -44,11 +51,13 @@ describe("handleInquiry", () => {
     expect(res.body).toEqual({ status: "unconfigured" });
   });
 
-  it("does not treat a key without a verified sender as configured", async () => {
+  it("treats a Resend key alone as configured, sending from the company domain to hello@", async () => {
     const fetchImpl = okFetch();
     const res = await handleInquiry(request(envelope()), deps(readIntakeEnv({ RESEND_API_KEY: "re_x" }), fetchImpl as unknown as typeof fetch));
-    expect(res.body).toEqual({ status: "unconfigured" });
-    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(res.body).toEqual({ status: "sent" });
+    const payload = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(payload.from).toBe("Nextmade <notifications@nextmadelabs.com>");
+    expect(payload.to).toEqual(["hello@nextmadelabs.com"]);
   });
 
   it("emails the business inbox from the controlled sender with the visitor as reply-to", async () => {
@@ -58,7 +67,7 @@ describe("handleInquiry", () => {
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://api.resend.com/emails");
     const payload = JSON.parse(String(init.body));
-    expect(payload.to).toEqual(["rpatdu@mentortech.space"]);
+    expect(payload.to).toEqual(["hello@nextmadelabs.com"]);
     expect(payload.from).toBe("Nextmade Website <inquiries@verified.example>");
     expect(payload.reply_to).toBe("jordan@example.com");
     expect(payload.subject).toMatch(/^\[Nextmade Inquiry\] New product \/ MVP — Jordan Rivera$/);

@@ -3,21 +3,26 @@ import { company } from "@/lib/site-config";
 /**
  * Server-only configuration for lead and application handling. Never import this from a Client Component:
  * these values are secrets or private routing details.
+ *
+ * Mail flow for nextmadelabs.com:
+ * - Inbound: Cloudflare Email Routing receives hello@ / careers@ and forwards to the team's mailbox. It cannot send.
+ * - Outbound (this site): Resend on the verified nextmadelabs.com domain (preferred), or SMTP through an existing
+ *   mailbox as a fallback.
  */
 
 export type IntakeEnv = {
+  /** Resend API key. Preferred provider: sends as the company domain once nextmadelabs.com is verified in Resend. */
   resendApiKey?: string;
-  /**
-   * SMTP delivery through the company's own mailbox (e.g. Namecheap Private Email:
-   * host mail.privateemail.com, port 465). Preferred over Resend when configured.
-   */
+  /** SMTP through an existing mailbox. Used only when Resend isn't configured. */
   smtp?: { host: string; port: number; user: string; password: string };
-  /** Controlled sender on a domain verified with the email provider. Visitors are only ever `replyTo`. */
+  /** Controlled sender. Visitors and candidates are only ever `replyTo`, never the sender. */
   emailFrom?: string;
-  /** Where project inquiries go. Defaults to the owner-supplied business inbox. */
+  /** Where project inquiries go. Defaults to hello@nextmadelabs.com. */
   businessTo: string;
-  /** Where job applications go. Defaults to the business inbox. */
+  /** Where job applications go. Defaults to careers@nextmadelabs.com. */
   hiringTo: string;
+  /** Send a short "we received it" email to the visitor/candidate after their message is delivered to us. */
+  sendConfirmations: boolean;
   hubspotToken?: string;
   upstashUrl?: string;
   upstashToken?: string;
@@ -28,7 +33,7 @@ export type IntakeEnv = {
 const val = (v: string | undefined) => (v && v.trim() ? v.trim() : undefined);
 
 export function readIntakeEnv(env: Record<string, string | undefined> = process.env): IntakeEnv {
-  const businessTo = val(env.BUSINESS_CONTACT_EMAIL) ?? val(env.INQUIRY_TO_EMAIL) ?? company.contactEmail;
+  const resendApiKey = val(env.RESEND_API_KEY);
   const smtpHost = val(env.SMTP_HOST);
   const smtpUser = val(env.SMTP_USER);
   const smtpPassword = env.SMTP_PASSWORD; // not trimmed: passwords may legitimately contain spaces
@@ -36,13 +41,19 @@ export function readIntakeEnv(env: Record<string, string | undefined> = process.
     smtpHost && smtpUser && smtpPassword
       ? { host: smtpHost, port: Number(env.SMTP_PORT) > 0 ? Number(env.SMTP_PORT) : 465, user: smtpUser, password: smtpPassword }
       : undefined;
+  // Resend sends as the company domain; an SMTP mailbox can only send as itself.
+  const defaultFrom = resendApiKey
+    ? `${company.displayName} <${company.notificationsEmail}>`
+    : smtp
+      ? `${company.displayName} Website <${smtp.user}>`
+      : undefined;
   return {
-    resendApiKey: val(env.RESEND_API_KEY),
+    resendApiKey,
     smtp,
-    // With SMTP, the mailbox itself is the sender unless EMAIL_FROM overrides the display name/address.
-    emailFrom: val(env.EMAIL_FROM) ?? val(env.INQUIRY_FROM_EMAIL) ?? (smtp ? `${company.displayName} Website <${smtp.user}>` : undefined),
-    businessTo,
-    hiringTo: val(env.HIRING_EMAIL) ?? businessTo,
+    emailFrom: val(env.EMAIL_FROM) ?? val(env.INQUIRY_FROM_EMAIL) ?? defaultFrom,
+    businessTo: val(env.BUSINESS_CONTACT_EMAIL) ?? val(env.INQUIRY_TO_EMAIL) ?? company.contactEmail,
+    hiringTo: val(env.HIRING_EMAIL) ?? company.careersEmail,
+    sendConfirmations: val(env.SEND_CONFIRMATION_EMAILS)?.toLowerCase() === "true",
     hubspotToken: val(env.HUBSPOT_ACCESS_TOKEN),
     upstashUrl: val(env.UPSTASH_REDIS_REST_URL),
     upstashToken: val(env.UPSTASH_REDIS_REST_TOKEN),
@@ -54,9 +65,9 @@ export function readIntakeEnv(env: Record<string, string | undefined> = process.
   };
 }
 
-/** Email needs a complete provider (SMTP mailbox, or Resend key + sender). Fails closed otherwise. */
+/** Email needs a complete provider (Resend key, or an SMTP mailbox) and a sender. Fails closed otherwise. */
 export function isEmailConfigured(env: IntakeEnv): boolean {
-  return Boolean(env.smtp || (env.resendApiKey && env.emailFrom));
+  return Boolean((env.resendApiKey || env.smtp) && env.emailFrom);
 }
 
 export function isCrmConfigured(env: IntakeEnv): boolean {

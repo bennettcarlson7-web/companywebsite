@@ -5,7 +5,10 @@ export type DeliveryResult = { channel: "email" | "crm"; ok: boolean; detail?: s
 
 export type EmailMessage = {
   to: string;
-  /** The visitor's or candidate's address. Never used as `from`. */
+  /**
+   * Where replies go: the visitor/candidate on notifications to us, our inbox on confirmations to them.
+   * Never used as `from`.
+   */
   replyTo: string;
   subject: string;
   html: string;
@@ -52,9 +55,9 @@ function smtpSenderFor(smtp: NonNullable<IntakeEnv["smtp"]>): SmtpSender {
 }
 
 /**
- * Sends a notification. Reports success only when the provider accepts the message:
- * the SMTP server accepts the DATA command, or Resend returns 2xx.
- * `from` is always the configured company sender; the visitor/candidate is only `replyTo`.
+ * Sends one email. Reports success only when the provider accepts the message:
+ * Resend returns 2xx, or the SMTP server accepts the DATA command.
+ * `from` is always the configured company sender. Resend (company domain) is preferred over SMTP (mailbox).
  */
 export async function sendEmail(
   message: EmailMessage,
@@ -64,7 +67,7 @@ export async function sendEmail(
 ): Promise<DeliveryResult> {
   const subject = cleanSubject(message.subject);
 
-  if (env.smtp) {
+  if (!env.resendApiKey && env.smtp) {
     try {
       const send = smtpSender ?? smtpSenderFor(env.smtp);
       await send({ ...message, subject, from: env.emailFrom ?? env.smtp.user });

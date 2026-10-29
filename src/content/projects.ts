@@ -10,6 +10,100 @@ import type { Project } from "@/types/content";
  */
 export const projects: Project[] = [
   {
+    slug: "ai-intake-follow-up-agent",
+    title: "AI Agent for Client Intake & Follow-Up",
+    category: "AI agents & automation",
+    kind: "concept",
+    visual: "assistant",
+    tags: ["AI Agent", "Automation", "CRM Integration"],
+    summary:
+      "A concept for an AI agent that qualifies new inquiries, drafts replies, and books follow-ups — with a person approving every message.",
+    seoDescription:
+      "Illustrative concept: an AI agent that triages inbound client inquiries, drafts personalized follow-ups, and updates the CRM, with human approval and audit logs.",
+    scenario:
+      "Imagine a growing professional services firm — a clinic group, a real estate brokerage, or a regional law practice — that gets inquiries from web forms, email, and phone messages. Good leads wait days for a reply because staff triage everything by hand, and details get lost between the inbox and the CRM.",
+    challenge: [
+      "Inquiries arrive in several channels and are triaged by hand, so response times vary from hours to days.",
+      "Staff retype the same details into the CRM and calendar, and follow-ups slip.",
+      "The firm wants AI help but can't risk an automated message that is wrong, off-brand, or shares private data.",
+    ],
+    approach: [
+      {
+        title: "Automate one workflow end to end",
+        body: "Start with a single, measurable path — new inquiry to booked consultation — before adding channels or tasks.",
+      },
+      {
+        title: "Human in the loop by design",
+        body: "The agent drafts and proposes; a person approves anything sent to a client. Autonomy is widened only where evaluation shows it's safe.",
+      },
+      {
+        title: "Tools, not free rein",
+        body: "Give the agent a small set of permissioned actions (read inquiry, look up CRM record, propose time slots) with every call logged.",
+      },
+    ],
+    solution: [
+      "An agent that classifies each inquiry, extracts key details, and flags urgent or sensitive requests for a person.",
+      "Draft replies in the firm's tone, queued for one-click approval or edit.",
+      "CRM and calendar updates through their APIs, with retries and an audit trail of every action.",
+      "An evaluation set of real (anonymized) inquiries to measure accuracy before and after each change.",
+    ],
+    features: ["Inquiry triage", "Approval queue", "CRM & calendar sync", "Action audit log", "Quality evaluations"],
+    technologies: ["TypeScript", "Python", "LLM APIs", "Tool calling", "PostgreSQL", "CRM APIs"],
+    considerations: [
+      "Regulated industries (health, legal, finance) need strict limits on what data reaches the model and what the agent may say.",
+      "Clear disclosure when a message was drafted with AI, and an easy path to a person.",
+      "Model cost and latency are monitored per workflow, not just per month.",
+    ],
+    relatedServices: ["ai-solutions-automation", "system-integration-modernization"],
+  },
+  {
+    slug: "ai-ready-data-platform",
+    title: "AI-Ready Data Platform for an Operations-Heavy Business",
+    category: "Data engineering",
+    kind: "concept",
+    visual: "dashboard",
+    tags: ["Data Engineering", "Pipelines", "Analytics"],
+    summary:
+      "A concept for turning scattered operational data into one trusted, governed source for reporting and AI.",
+    seoDescription:
+      "Illustrative concept: a governed data platform that consolidates operational, finance, and sensor data into reliable pipelines for analytics and AI use cases.",
+    scenario:
+      "Imagine a mid-sized company with field operations — energy services, logistics, or manufacturing — whose data lives in an ERP, spreadsheets, a maintenance system, and equipment telemetry. Leadership wants forecasting and AI assistants, but every report starts with a week of manual data cleanup.",
+    challenge: [
+      "The same metric has different values in different reports, so nobody trusts the numbers.",
+      "Data is exported by hand from several systems, and pipelines break silently.",
+      "AI projects stall because the underlying data is incomplete, undocumented, or not permissioned.",
+    ],
+    approach: [
+      {
+        title: "Define the metrics that matter",
+        body: "Agree on a short list of business definitions with the people who use them before moving any data.",
+      },
+      {
+        title: "Reliable pipelines first",
+        body: "Automate ingestion with tests, freshness checks, and alerts so problems surface before reports do.",
+      },
+      {
+        title: "Governance built in",
+        body: "Document datasets, track lineage, and apply access rules once, so analytics and AI use the same trusted source.",
+      },
+    ],
+    solution: [
+      "Automated ingestion from the ERP, maintenance system, spreadsheets, and telemetry into a central warehouse.",
+      "Tested, versioned transformations that produce documented business metrics.",
+      "Dashboards built on those shared definitions, plus curated datasets ready for forecasting and AI retrieval.",
+      "Monitoring for data freshness, volume anomalies, and pipeline failures.",
+    ],
+    features: ["Automated ingestion", "Tested transformations", "Data catalog & lineage", "Freshness alerts", "Role-based access"],
+    technologies: ["Python", "SQL", "dbt", "Cloud data warehouse", "Orchestration", "Streaming ingestion"],
+    considerations: [
+      "Start with the metrics leadership already argues about — that's where trust pays off fastest.",
+      "Sensitive financial and personnel data needs access controls before it reaches any AI tool.",
+      "Warehouse and compute costs should be monitored from day one.",
+    ],
+    relatedServices: ["system-integration-modernization", "ai-solutions-automation"],
+  },
+  {
     slug: "operations-dashboard",
     title: "Operations Dashboard for a Field Services Business",
     category: "Internal platform",

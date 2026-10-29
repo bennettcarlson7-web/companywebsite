@@ -63,8 +63,9 @@ export default function PrivacyPage() {
 
       <h2>Service providers</h2>
       <p>
-        We use providers to run the site and deliver form submissions to our team: website hosting and, when enabled,
-        Resend for email delivery. For project inquiries only, we may also use HubSpot as a customer relationship
+        We use providers to run the site and deliver form submissions to our team: website hosting, Cloudflare for
+        domain and email routing, and an email delivery service (such as Resend) to send your submission to our team
+        and, if enabled, a short confirmation back to you. For project inquiries only, we may also use HubSpot as a customer relationship
         management (CRM) tool; job applications are never sent to the CRM. Providers process information on our behalf
         and only as needed to provide their services. [Confirm the final list of providers before launch.]
       </p>

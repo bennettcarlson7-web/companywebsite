@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const EMAIL = "rpatdu@mentortech.space";
+const EMAIL = "hello@nextmadelabs.com";
+const CAREERS_EMAIL = "careers@nextmadelabs.com";
 const TEAM: [string, string][] = [
   ["Antonio Ortiz", "CEO"],
   ["Ricky Lee Sprouse", "CTO"],
@@ -24,6 +25,8 @@ const routes = [
   "/services/dedicated-engineering-teams",
   "/work",
   "/work/operations-dashboard",
+  "/work/ai-intake-follow-up-agent",
+  "/work/ai-ready-data-platform",
   "/work/mobile-booking-platform",
   "/work/ai-knowledge-assistant",
   "/process",
@@ -115,15 +118,16 @@ test.describe("business facts as rendered", () => {
     for (const path of ["/", "/contact", "/careers", "/careers/talent-recruiter", "/careers/apply", "/about", "/privacy", "/terms"]) {
       await page.goto(path);
       await expect(page.locator("main")).not.toContainText(EMAIL);
+      await expect(page.locator("main")).not.toContainText(CAREERS_EMAIL);
       await expect(page.locator(`footer a[href="mailto:${EMAIL}"]`)).toHaveCount(1);
     }
     await page.goto("/careers");
-    await expect(page.getByRole("link", { name: "Email our hiring team" })).toHaveAttribute("href", new RegExp(`^mailto:${EMAIL}`));
+    await expect(page.getByRole("link", { name: "Email our hiring team" })).toHaveAttribute("href", new RegExp(`^mailto:${CAREERS_EMAIL}`));
   });
 
   test("concept projects are labeled as illustrative and not client work", async ({ page }) => {
     await page.goto("/work");
-    await expect(page.getByText("not a client project")).toHaveCount(3);
+    await expect(page.getByText("not a client project")).toHaveCount(5);
     await page.goto("/work/operations-dashboard");
     await expect(page.getByText("Illustrative example", { exact: true })).toBeVisible();
   });
@@ -174,7 +178,7 @@ test.describe("careers flow", () => {
     await expect(page.getByRole("heading", { name: /couldn.t send your application/i })).toBeVisible();
     await expect(page.getByText(/we received your application/i)).toHaveCount(0);
     const href = await page.getByRole("link", { name: "Send by Email" }).getAttribute("href");
-    expect(decodeURIComponent(href!)).toContain(`mailto:${EMAIL}?subject=[Nextmade Careers] Senior Software Engineer — Data Engineering — Application`);
+    expect(decodeURIComponent(href!)).toContain(`mailto:${CAREERS_EMAIL}?subject=[Nextmade Careers] Senior Software Engineer — Data Engineering — Application`);
   });
 });
 

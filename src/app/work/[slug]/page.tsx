@@ -34,7 +34,9 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
 
   const isConcept = project.kind === "concept";
   const services = project.relatedServices.map(getService).filter((s) => s !== undefined);
-  const more = getProjects().filter((p) => p.slug !== project.slug);
+  const more = getProjects()
+    .filter((p) => p.slug !== project.slug)
+    .slice(0, 2);
 
   return (
     <>

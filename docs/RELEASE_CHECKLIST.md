@@ -12,9 +12,9 @@ Legend: **PASS** = verified by an automated test or a direct check · **FAIL** =
 | --- | --- |
 | `npm run lint` | PASS (0 problems) |
 | `npm run typecheck` | PASS |
-| `npm run test` (Vitest) | PASS — 8 files, 65 tests |
-| `npm run build` | PASS — 37 static pages + `/api/inquiry`, `/api/apply` |
-| `npx playwright test` (desktop + Pixel 7) | PASS — 113 passed, 9 skipped by design (viewport-specific) |
+| `npm run test` (Vitest) | PASS — 8 files, 72 tests |
+| `npm run build` | PASS — 39 static pages + `/api/inquiry`, `/api/apply` |
+| `npx playwright test` (desktop + Pixel 7) | PASS — 117 passed, 9 skipped by design (viewport-specific) |
 
 ## Features
 
@@ -52,6 +52,9 @@ Legend: **PASS** = verified by an automated test or a direct check · **FAIL** =
 | Lighthouse (lab, mobile emulation) | Measured — see `FINAL_LAUNCH_AUDIT.md` | A11y 100; Perf 57–67 on a slow test machine |
 | SMTP delivery via company mailbox (mocked transport) | PASS | `smtp-delivery.test.ts`: from = mailbox, to = inbox, reply-to = visitor; auth failure → error, logs only the code |
 | Email address not printed in main page content | PASS | E2E checks `main` on 8 pages; footer keeps one mailto |
+| Domain `nextmadelabs.com`: inquiries → hello@, applications → careers@, sender notifications@ via Resend (preferred over SMTP) | PASS (mocked) | `smtp-delivery.test.ts`, `handle-*.test.ts`, `content-integrity.test.ts` |
+| Confirmation emails: only after our copy is delivered; Reply-To hello@/careers@; never echo visitor text; failure doesn't change result | PASS (mocked) | `smtp-delivery.test.ts` "confirmation emails" |
+| Two new concept projects labeled "not a client project" | PASS | E2E counts 5 labels; routes return 200 |
 | **Real email delivered to a company inbox** | **NOT TESTED — NOT VERIFIED, requires credentials** | Mailbox password not available |
 | Upstash distributed rate limiting against a live Redis | NOT TESTED — requires credentials | Code path unit-tested only via the interface |
 | HubSpot contact creation | NOT TESTED — requires credentials | Mocked only |

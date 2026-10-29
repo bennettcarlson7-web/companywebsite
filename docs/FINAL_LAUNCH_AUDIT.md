@@ -12,17 +12,16 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
 
 ## Top 5 launch blockers
 
-1. **Email delivery is unverified.** The site now sends through the company mailbox (Namecheap Private Email SMTP),
-   but no mailbox password was available here, so no real inquiry or application has reached
-   `rpatdu@mentortech.space`. Until it is set, both forms fall back to "we couldn't send it from the website — email
-   us", which is honest but adds friction. *Owner:* set `SMTP_PASSWORD` (`.env.local` and Vercel), then send one test
-   of each form.
+1. **Email delivery is unverified.** The site sends as `notifications@nextmadelabs.com` via Resend, with SMTP as a fallback,
+   to `hello@` / `careers@nextmadelabs.com`, which Cloudflare Email Routing forwards. No provider key was available here,
+   and the Resend DNS records don't exist yet, so no real message has been delivered. Until then, both forms fall back to
+   "we couldn't send it from the website — email us". *Owner:* follow `docs/EMAIL_SETUP.md`, then test both forms.
 2. **Job postings lack legally required facts.** Location, employment type, and especially **pay ranges**
    (required in CO, CA, WA, NY, IL, and other jurisdictions for roles that can be filled there, including remote)
    are unknown. Don't promote the roles on job boards or social media until counsel confirms what each posting
    must include.
-3. **Brand / entity / domain relationship unresolved.** "Nextmade" vs. `mentortech.space` and the legal entity name
-   are unconfirmed (`docs/OWNER_DECISIONS.md` #1–3). This affects trust, email deliverability, and the policies.
+3. **Legal entity name unconfirmed.** The domain is now settled (`nextmadelabs.com`), but the legal entity name and
+   address for the policies and footer are not (`docs/OWNER_DECISIONS.md` #1, #5).
 4. **Privacy Policy and Terms are drafts.** Retention periods, provider list, governing law, and entity/address are
    bracketed. Collecting candidate data needs a defined retention period, restricted inbox access, and a
    deletion process first.
@@ -38,7 +37,7 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
 | All routes return 200 with one `h1` and a title | PASS | E2E "routes" (25 routes × 2 devices) | — |
 | Not-found states (page, service slug, job slug) | PASS | E2E: 404s | — |
 | Title/description/Open Graph per page | PASS | E2E checks og:title/og:image; the OG image was missing on custom-metadata pages — fixed | Check previews with LinkedIn Post Inspector after deploy |
-| Canonical URLs | NOT TESTED | Emitted only when `NEXT_PUBLIC_SITE_URL` is set (not set here) | Set the URL in Vercel, then view source |
+| Canonical URLs | PASS (local) | Default base `https://nextmadelabs.com` (unit test); canonical tags emitted | View source on the live domain after deploy |
 | robots.txt / sitemap.xml | PASS | robots disallows all (indexing off by design); sitemap includes 3 job pages, excludes the apply form | Set `NEXT_PUBLIC_ALLOW_INDEXING=true` on production only after the blockers clear |
 | Team names/roles consistent, mobile + desktop | PASS | Unit (exact list/order) + E2E on both devices | Add portraits/bios only with consent |
 | No fabricated bios, photos, logos, stats, certifications | PASS | Team data has `photo`/`profileUrl` = null (test-enforced); no logos or metrics in source | Keep `content-integrity.test.ts` in CI |
@@ -53,7 +52,7 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
 | Success only after the provider accepts | PASS (mocked) | Unit: 2xx → sent; 4xx/5xx/network → error | — |
 | Unconfigured outcome is honest | PASS | E2E: 503 → "has not been sent" + prefilled mailto to the business inbox | — |
 | **End-to-end deliverability to a company inbox** | **NOT TESTED** | SMTP adapter unit-tested with a mocked transport (success, auth failure → error). No mailbox password here. **NOT VERIFIED — requires credentials.** | Owner: set `SMTP_PASSWORD`; submit both forms; confirm receipt, reply-to, and spam placement |
-| Sender domain alignment | PASS (DNS checked) | MX = mx1/mx2.privateemail.com; SPF `include:spf.privateemail.com`; no DMARC record found | Add a DMARC record (`p=none` to start) |
+| Sender domain alignment (nextmadelabs.com) | NOT READY (DNS checked Oct 29) | MX = Cloudflare Email Routing (receive only); SPF covers Cloudflare forwarding only; no Resend DKIM/`send` records; no DMARC; no `www` record | Add the Resend records and DMARC, and add `www` in Vercel (`docs/EMAIL_SETUP.md`) |
 | Abuse controls (honeypot, timing, origin, size, rate limit, dedupe) | PASS | Unit + E2E API guards | Configure Upstash for production |
 | Safe logs (no PII) | PASS | Unit logger spies (inquiry + application) | — |
 | No sensitive analytics | PASS | No third-party scripts; analytics events carry only outcome + role/project-type slugs | Add consent before adding any analytics tool |

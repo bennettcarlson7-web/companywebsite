@@ -86,20 +86,22 @@ See [.env.example](.env.example) for the full annotated list.
 
 | Variable | Scope | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | build | Canonical base URL; enables canonical tags, JSON-LD, absolute sitemap |
-| `NEXT_PUBLIC_ALLOW_INDEXING` | build | `true` to allow search engines (also requires the URL) |
+| `NEXT_PUBLIC_SITE_URL` | build | Canonical base URL override (default `https://nextmadelabs.com`) |
+| `NEXT_PUBLIC_ALLOW_INDEXING` | build | `true` to allow search engines (production only) |
 | `NEXT_PUBLIC_LINKEDIN_URL` / `_GITHUB_URL` / `_X_URL` | build | Footer social links (hidden when empty) |
 | `BOOKING_URL` | build (server) | Real booking link; without it, visitors are asked to request a call by email |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | server | **Recommended.** Send through the company mailbox (Namecheap Private Email: `mail.privateemail.com`, 465) |
-| `RESEND_API_KEY`, `EMAIL_FROM` | server | Alternative to SMTP. `EMAIL_FROM` must be on a domain verified in Resend; with SMTP it defaults to the mailbox |
-| `BUSINESS_CONTACT_EMAIL` | server | Inquiry recipient (default `rpatdu@mentortech.space`) |
-| `HIRING_EMAIL` | server | Application recipient (default: the business inbox) |
+| `RESEND_API_KEY` | server | **Recommended.** Sends as `notifications@nextmadelabs.com` once the domain is verified in Resend |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | server | Fallback when Resend isn't set: send through an existing mailbox (as that mailbox) |
+| `EMAIL_FROM` | server | Sender override. Default `Nextmade <notifications@nextmadelabs.com>` (Resend) or the SMTP mailbox |
+| `BUSINESS_CONTACT_EMAIL` | server | Inquiry recipient (default `hello@nextmadelabs.com`) |
+| `HIRING_EMAIL` | server | Application recipient (default `careers@nextmadelabs.com`) |
+| `SEND_CONFIRMATION_EMAILS` | server | `true` to email a "we received it" note to the client/candidate (never echoes their text) |
 | `HUBSPOT_ACCESS_TOKEN` | server | Optional: also create a HubSpot contact for **project inquiries only** |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | server | Distributed rate limiting (recommended on Vercel) |
 | `INTAKE_RATE_LIMIT_MAX`, `INTAKE_RATE_LIMIT_WINDOW_SECONDS` | server | Per form, per IP. Defaults: 5 per 600 s |
 
-The public business email (`rpatdu@mentortech.space`) is owner-supplied and lives in `company.contactEmail`, not in
-an env var. Legacy names (`INQUIRY_TO_EMAIL`, `INQUIRY_FROM_EMAIL`, `NEXT_PUBLIC_SCHEDULING_URL`,
+The domain and public addresses (`hello@` and `careers@nextmadelabs.com`) are owner-supplied and live in `company`
+in `src/lib/site-config.ts`, not in env vars. Legacy names (`INQUIRY_TO_EMAIL`, `INQUIRY_FROM_EMAIL`, `NEXT_PUBLIC_SCHEDULING_URL`,
 `INQUIRY_RATE_LIMIT_*`) are still read as fallbacks.
 
 Build-time values are inlined when the site is built, so redeploy after changing them. Server-only values are read
@@ -133,24 +135,20 @@ cold starts, which isn't real protection. Configure Upstash Redis before enablin
 
 ### Enabling email delivery
 
-**Recommended: the company mailbox over SMTP.** `mentortech.space` is hosted on Namecheap Private Email, and its SPF
-record already authorizes Private Email's servers, so notifications sent this way are well aligned for
-deliverability.
+Full owner steps, including the DNS records: **[docs/EMAIL_SETUP.md](docs/EMAIL_SETUP.md)**. In short:
 
-1. Local: open `.env.local` (git-ignored; host, port, and user are pre-filled) and set `SMTP_PASSWORD` to the
-   mailbox password. Restart the server.
-2. Production (Vercel → Project → Settings → Environment Variables): set `SMTP_HOST=mail.privateemail.com`,
-   `SMTP_PORT=465`, `SMTP_USER=rpatdu@mentortech.space`, and `SMTP_PASSWORD` (mark it Sensitive). Redeploy.
-3. Submit one project inquiry and one application. Confirm both arrive at `rpatdu@mentortech.space`, that Reply goes
-   to the submitter, and that they aren't in spam.
+- **Receiving:** Cloudflare Email Routing (already the domain's MX) forwards `hello@` and `careers@nextmadelabs.com` to
+  the team's mailbox. Create both routes.
+- **Sending (recommended): Resend.** Verify `nextmadelabs.com` in Resend (DKIM + `send` subdomain records in
+  Cloudflare), add DMARC, set `RESEND_API_KEY`, and redeploy. Notifications go *from* `notifications@`, *to* `hello@` /
+  `careers@`, with *Reply-To* set to the visitor or candidate.
+- **Confirmations:** with `SEND_CONFIRMATION_EMAILS=true`, the visitor or candidate gets a short "we received it" email
+  after our copy is delivered. Its Reply-To is `hello@` / `careers@`. It never repeats their text, and a failed
+  confirmation never changes their result.
+- **Fallback: SMTP** through an existing mailbox (e.g. `SMTP_HOST=mail.privateemail.com`, port 465). Used only when
+  `RESEND_API_KEY` is empty.
 
-Notifications are sent *from* the mailbox (shown as "Nextmade Website"), *to* the business/hiring inbox, with
-*Reply-To* set to the visitor or candidate.
-
-**Alternative: Resend.** Verify a sending domain in Resend, then set `RESEND_API_KEY` and `EMAIL_FROM`. Resend is
-used only when SMTP isn't configured.
-
-If neither is configured, or the mail server rejects a message, the visitor sees "we couldn't send your
+If nothing is configured, or the provider rejects a message, the visitor sees "we couldn't send your
 inquiry/application from the website" with a one-click prefilled email instead. Never a false confirmation.
 ## SEO
 

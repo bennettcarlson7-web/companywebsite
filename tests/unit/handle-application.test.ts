@@ -39,12 +39,12 @@ describe("handleApplication", () => {
     expect(payload.subject).toBe("[Nextmade Careers] Senior Software Engineer — Data Engineering — Application");
   });
 
-  it("defaults the hiring inbox to the business email", async () => {
+  it("defaults the hiring inbox to careers@nextmadelabs.com, separate from client inquiries", async () => {
     const fetchImpl = okFetch();
-    const env = readIntakeEnv({ RESEND_API_KEY: "re_test", EMAIL_FROM: "x@verified.example" });
+    const env = readIntakeEnv({ RESEND_API_KEY: "re_test" });
     await handleApplication(request(envelope()), deps(env, fetchImpl as unknown as typeof fetch));
     const payload = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
-    expect(payload.to).toEqual(["rpatdu@mentortech.space"]);
+    expect(payload.to).toEqual(["careers@nextmadelabs.com"]);
   });
 
   it("reports an error, not success, when the provider rejects the email", async () => {

@@ -4,6 +4,7 @@ import { applicationFieldErrors, applicationSchema, type Application, type Appli
 import { isApplicationDeliveryConfigured, type IntakeEnv } from "./env";
 import type { RateLimiter } from "./rate-limit";
 import { renderNotificationHtml, sendEmail, type SmtpSender } from "./email";
+import { buildApplicationConfirmation, sendConfirmation } from "./confirmation";
 import { DeliveredSubmissions, defaultLogger, guardSubmission, type Logger, type SubmissionRequest } from "./submission-guard";
 
 export type ApplicationDeps = {
@@ -92,5 +93,20 @@ export async function handleApplication(req: SubmissionRequest, deps: Applicatio
 
   delivered.add(guard.submissionId);
   log({ outcome: "sent", role: parsed.data.role });
+
+  const roleTitle = getJob(parsed.data.role)?.title ?? parsed.data.role;
+  const confirmation = await sendConfirmation(
+    buildApplicationConfirmation(parsed.data.name, parsed.data.email, roleTitle, deps.env),
+    deps.env,
+    deps.fetchImpl,
+    deps.smtpSender,
+  );
+  if (confirmation) {
+    log({
+      outcome: confirmation.ok ? "confirmation_sent" : "confirmation_failed",
+      role: parsed.data.role,
+      failures: confirmation.detail ? [confirmation.detail] : undefined,
+    });
+  }
   return { httpStatus: 200, body: { status: "sent" } };
 }

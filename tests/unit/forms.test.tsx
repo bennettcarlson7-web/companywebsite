@@ -5,7 +5,8 @@ import { ProjectInquiryForm } from "@/components/forms/project-inquiry-form";
 import { CandidateApplicationForm } from "@/components/forms/candidate-application-form";
 import { isActivePath } from "@/components/layout/nav-links";
 
-const EMAIL = "rpatdu@mentortech.space";
+const EMAIL = "hello@nextmadelabs.com";
+const CAREERS_EMAIL = "careers@nextmadelabs.com";
 
 function mockFetch(status: number, body: unknown) {
   const fn = vi.fn(async () => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
@@ -53,7 +54,7 @@ describe("ProjectInquiryForm", () => {
     expect(screen.queryByText(/we received your inquiry/i)).not.toBeInTheDocument();
     expect((screen.getByLabelText(/your project summary/i) as HTMLTextAreaElement).value).toContain("Name: Jordan Rivera");
     const mail = screen.getByRole("link", { name: /send by email/i }).getAttribute("href")!;
-    expect(mail).toMatch(/^mailto:rpatdu@mentortech\.space\?/);
+    expect(mail).toMatch(/^mailto:hello@nextmadelabs\.com\?/);
     expect(decodeURIComponent(mail)).toContain("Jordan Rivera");
   });
 
@@ -105,20 +106,20 @@ describe("CandidateApplicationForm", () => {
 
   it("preselects the role from ?role= in the URL", () => {
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
-    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
     expect(screen.getByLabelText(/^role/i)).toHaveValue("talent-recruiter");
   });
 
   it("ignores unknown roles in the URL", () => {
     window.history.replaceState({}, "", "/careers/apply?role=chief-wizard");
-    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
     expect(screen.getByLabelText(/^role/i)).toHaveValue("");
   });
 
   it("validates required fields and link safety before sending", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
     await user.type(screen.getByLabelText(/portfolio or github/i), "javascript:alert(1)");
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     const summary = await screen.findByRole("alert");
@@ -131,7 +132,7 @@ describe("CandidateApplicationForm", () => {
     window.history.replaceState({}, "", "/careers/apply?role=senior-software-engineer-ai-ml");
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByText(/we received your application/i)).toBeInTheDocument();
@@ -144,20 +145,20 @@ describe("CandidateApplicationForm", () => {
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
     mockFetch(503, { status: "unconfigured" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByRole("heading", { name: /couldn.t send your application/i })).toBeInTheDocument();
     expect(screen.queryByText(/we received your application/i)).not.toBeInTheDocument();
     const href = decodeURIComponent(screen.getByRole("link", { name: /send by email/i }).getAttribute("href")!);
-    expect(href).toContain("mailto:rpatdu@mentortech.space?subject=[Nextmade Careers] Talent Recruiter — Application");
+    expect(href).toContain("mailto:careers@nextmadelabs.com?subject=[Nextmade Careers] Talent Recruiter — Application");
   });
 
   it("shows a provider failure as not sent", async () => {
     mockFetch(502, { status: "error" });
     const user = userEvent.setup();
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
-    render(<CandidateApplicationForm hiringEmail={EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByText(/your application was not sent/i)).toBeInTheDocument();

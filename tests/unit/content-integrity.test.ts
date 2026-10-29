@@ -47,10 +47,11 @@ describe("owner-supplied facts", () => {
     expect(UNCONFIRMED_DETAIL).toBe("Shared during the hiring process");
   });
 
-  it("publishes the correct business email everywhere it's configured", () => {
-    expect(company.contactEmail).toBe("rpatdu@mentortech.space");
-    expect(siteConfig.contact.email).toBe("rpatdu@mentortech.space");
-    expect(siteConfig.contact.careersEmail).toBe("rpatdu@mentortech.space");
+  it("uses the company domain and the owner-chosen client and hiring inboxes", () => {
+    expect(company.domain).toBe("nextmadelabs.com");
+    expect(siteConfig.url).toBe("https://nextmadelabs.com");
+    expect(siteConfig.contact.email).toBe("hello@nextmadelabs.com");
+    expect(siteConfig.contact.careersEmail).toBe("careers@nextmadelabs.com");
   });
 });
 

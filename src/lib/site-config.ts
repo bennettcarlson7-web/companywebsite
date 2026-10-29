@@ -28,11 +28,14 @@ export const company = {
   /** Current site brand. The legal company name is NOT yet confirmed (see docs/OWNER_DECISIONS.md). */
   displayName: "Nextmade",
   market: "United States",
-  /**
-   * Public business inbox. Note: its domain (mentortech.space) differs from the brand; the relationship
-   * between them is an open owner decision and is not stated anywhere on the site.
-   */
-  contactEmail: "rpatdu@mentortech.space",
+  /** Company domain (owner-supplied). DNS on Cloudflare; inbound mail via Cloudflare Email Routing. */
+  domain: "nextmadelabs.com",
+  /** Public inbox for clients (owner-chosen). Cloudflare Email Routing forwards it to the team's mailbox. */
+  contactEmail: "hello@nextmadelabs.com",
+  /** Public inbox for candidates (owner-chosen), kept separate so applicant data can be access-restricted. */
+  careersEmail: "careers@nextmadelabs.com",
+  /** Sender for website notifications and confirmations. Must be on a domain verified with the provider. */
+  notificationsEmail: "notifications@nextmadelabs.com",
   valueProposition: "Your Idea. Our Engineering. Real Results.",
   secondaryMessage: "You bring the idea. We help make it real.",
   stage: "Early-stage software development and IT consulting company",
@@ -51,16 +54,19 @@ export const siteConfig = {
   /** Shown in footer/contact. Verify before launch (see docs/OWNER_DECISIONS.md). */
   locationStatement: "Remote-first, working with teams across the U.S.",
 
-  /** Public base URL, e.g. https://www.example.com. Enables canonical URLs and sitemap hosts. */
-  url: optionalUrl(process.env.NEXT_PUBLIC_SITE_URL),
+  /**
+   * Public base URL for canonical URLs, Open Graph, JSON-LD, and sitemap hosts. Defaults to the company domain;
+   * `NEXT_PUBLIC_SITE_URL` overrides it (e.g. for a staging host).
+   */
+  url: optionalUrl(process.env.NEXT_PUBLIC_SITE_URL) ?? `https://${company.domain}`,
   /** Search indexing is opt-in so preview deployments with draft content are not indexed. */
   allowIndexing: process.env.NEXT_PUBLIC_ALLOW_INDEXING === "true",
 
   contact: {
     /** Public inbox for project inquiries (owner-supplied). */
     email: company.contactEmail as string,
-    /** Public inbox for job applications. Same inbox until the owner sets up a separate one. */
-    careersEmail: company.contactEmail as string,
+    /** Public inbox for job applications and candidate questions. */
+    careersEmail: company.careersEmail as string,
     /**
      * Real booking page (Cal.com, Calendly, HubSpot Meetings…). Read at build time on the server only.
      * `null` → visitors are invited to request a call by email instead.
@@ -131,6 +137,8 @@ export function copyrightHolder(): string {
 /** Email subject lines, so both tracks are easy to filter in the shared inbox. */
 export const emailSubjects = {
   inquiry: `Project inquiry — ${company.displayName}`,
+  inquiryReceived: `We received your project inquiry — ${company.displayName}`,
+  applicationReceived: (roleTitle: string) => `We received your application: ${roleTitle} — ${company.displayName}`,
   application: (roleTitle: string) => `[${company.displayName} Careers] ${roleTitle} — Application`,
   careersQuestion: `Careers question — ${company.displayName}`,
   callRequest: `Call request — ${company.displayName}`,

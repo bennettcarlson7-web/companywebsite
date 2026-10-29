@@ -3,6 +3,7 @@ import { isCrmConfigured, isEmailConfigured, type IntakeEnv } from "./env";
 import type { RateLimiter } from "./rate-limit";
 import { sendEmail, type DeliveryResult, type SmtpSender } from "./email";
 import { buildInquiryEmail, sendInquiryToHubSpot } from "./deliver";
+import { buildInquiryConfirmation, sendConfirmation } from "./confirmation";
 import { DeliveredSubmissions, defaultLogger, guardSubmission, type Logger, type SubmissionRequest } from "./submission-guard";
 
 export type InquiryDeps = {
@@ -60,5 +61,15 @@ export async function handleInquiry(req: SubmissionRequest, deps: InquiryDeps): 
 
   delivered.add(guard.submissionId);
   log({ outcome: "sent", channels: results.filter((r) => r.ok).map((r) => r.channel) });
+
+  if (isEmailConfigured(deps.env)) {
+    const confirmation = await sendConfirmation(
+      buildInquiryConfirmation(parsed.data.name, parsed.data.email, deps.env),
+      deps.env,
+      deps.fetchImpl,
+      deps.smtpSender,
+    );
+    if (confirmation) log({ outcome: confirmation.ok ? "confirmation_sent" : "confirmation_failed", failures: confirmation.detail ? [confirmation.detail] : undefined });
+  }
   return { httpStatus: 200, body: { status: "sent" } };
 }

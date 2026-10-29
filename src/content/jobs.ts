@@ -68,6 +68,7 @@ export const jobs: Job[] = [
     workOn: [
       "Design and ship AI-powered features inside production web applications and internal tools.",
       "Integrate LLM and ML services where they're the right fit — and recommend simpler approaches where they aren't.",
+      "Build AI agents that take actions in business systems through permissioned tools, with human approval where the stakes call for it.",
       "Build evaluation sets and quality checks so we can measure accuracy before launch and catch regressions after.",
       "Add monitoring for quality, latency, and cost, and make failure modes visible to the people using the system.",
       "Handle data and privacy concerns deliberately: what gets sent to which provider, what's retained, and who can see it.",
@@ -85,10 +86,11 @@ export const jobs: Job[] = [
     niceToHave: [
       "Experience with a major cloud platform (AWS, Google Cloud, or Azure).",
       "Retrieval-augmented generation (RAG), vector search, or document-processing pipelines.",
+      "Agent frameworks, tool calling, or the Model Context Protocol (MCP).",
       "MLOps practices: model versioning, deployment pipelines, or feature stores.",
       "Client-facing or consulting experience.",
     ],
-    skills: ["Python", "LLM applications", "Machine learning", "Evaluation", "APIs", "Observability"],
+    skills: ["Python", "LLM applications", "AI agents", "Machine learning", "Evaluation", "APIs", "Observability"],
     facts: unconfirmedFacts,
     posting: notPostable,
   },
@@ -107,6 +109,7 @@ export const jobs: Job[] = [
       "Build ingestion from APIs, databases, files, and event streams into well-structured storage.",
       "Write and maintain SQL and Python transformations that are tested, documented, and easy to change.",
       "Design data models that serve product features, reporting, and AI use cases without duplicating truth.",
+      "Prepare curated, documented datasets that AI features can retrieve from safely, with lineage and access rules.",
       "Put data-quality checks, freshness monitoring, and alerting in place so problems surface before users notice.",
       "Integrate business systems such as CRMs, billing, and operations tools, and keep them in sync reliably.",
       "Apply sensible privacy and access controls to sensitive data.",
@@ -148,6 +151,7 @@ export const jobs: Job[] = [
       "Keep pipelines organized and candidates informed at every stage.",
       "Coordinate interview scheduling across time zones.",
       "Help build inclusive hiring practices, from job descriptions to interview structure.",
+      "Track talent markets for AI, data, and software roles across the U.S., and keep postings compliant with state pay-transparency rules.",
       "Maintain clean, accurate applicant records and handle candidate data with care.",
     ],
     lookingFor: [

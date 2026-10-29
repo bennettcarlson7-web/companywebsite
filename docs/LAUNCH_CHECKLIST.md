@@ -26,7 +26,7 @@ Work through this before pointing a real domain at the site and enabling indexin
 
 - [ ] Domain email set up (e.g. `hello@yourdomain.com`) with SPF, DKIM, and DMARC.
 - [ ] `NEXT_PUBLIC_CONTACT_EMAIL` (and optionally `NEXT_PUBLIC_CAREERS_EMAIL`) set.
-- [ ] Resend: domain verified; `RESEND_API_KEY` and `EMAIL_FROM` set in production (recipients default to rpatdu@mentortech.space).
+- [ ] Email (docs/EMAIL_SETUP.md): Cloudflare routes for hello@/careers@; nextmadelabs.com verified in Resend; DMARC added; `RESEND_API_KEY` set in production; both forms tested; then `SEND_CONFIRMATION_EMAILS=true`.
 - [ ] Send a real test inquiry from production and confirm it arrives, reply-to works, and it isn't in spam.
 - [ ] Confirm the "demo mode" notice disappears after configuring (it's evaluated at build time, so redeploy).
 - [ ] Upstash Redis configured for distributed rate limiting (required on serverless hosting).
