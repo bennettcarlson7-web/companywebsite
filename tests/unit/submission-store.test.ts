@@ -35,12 +35,14 @@ afterEach(async () => {
 });
 
 describe("submission store configuration", () => {
-  it("saves locally by default, is off on Vercel or when disabled, and prefers Upstash when configured", () => {
-    expect(readIntakeEnv({}).submissionsDir).toBe(".data/submissions");
-    expect(readIntakeEnv({ VERCEL: "1" }).submissionsDir).toBeUndefined();
-    expect(readIntakeEnv({ SUBMISSIONS_DIR: "off" }).submissionsDir).toBeUndefined();
+  it("has identical defaults everywhere: file storage only when SUBMISSIONS_DIR is set, never on Vercel; Upstash preferred", () => {
+    // Same (empty) settings → same behavior locally and on Vercel: nothing configured.
+    expect(createSubmissionStore(readIntakeEnv({}))).toBeUndefined();
     expect(createSubmissionStore(readIntakeEnv({ VERCEL: "1" }))).toBeUndefined();
-    expect(createSubmissionStore(readIntakeEnv({}))?.name).toBe("file");
+    expect(readIntakeEnv({ SUBMISSIONS_DIR: ".data/submissions" }).submissionsDir).toBe(".data/submissions");
+    expect(readIntakeEnv({ SUBMISSIONS_DIR: "off" }).submissionsDir).toBeUndefined();
+    expect(readIntakeEnv({ VERCEL: "1", SUBMISSIONS_DIR: ".data/submissions" }).submissionsDir).toBeUndefined();
+    expect(createSubmissionStore(readIntakeEnv({ SUBMISSIONS_DIR: ".data/submissions" }))?.name).toBe("file");
     expect(createSubmissionStore(readIntakeEnv({ UPSTASH_REDIS_REST_URL: "https://u.example", UPSTASH_REDIS_REST_TOKEN: "t" }))?.name).toBe("upstash");
     // Names injected by Vercel's Storage → Upstash for Redis integration.
     expect(createSubmissionStore(readIntakeEnv({ VERCEL: "1", KV_REST_API_URL: "https://kv.example", KV_REST_API_TOKEN: "t" }))?.name).toBe("upstash");
@@ -89,6 +91,57 @@ describe("one-click submissions without email", () => {
     const d = deps(noEmail, failingStore);
     await handleApplication(req(validApplication), d);
     expect(JSON.stringify(d.log.mock.calls)).not.toMatch(/Sam|sam@example|pipelines/);
+  });
+});
+
+describe("local / production parity", () => {
+  const upstashOk = () => vi.fn(async () => new Response(JSON.stringify([{ result: "OK" }, { result: 1 }]), { status: 200 }));
+  const settings = { KV_REST_API_URL: "https://kv.example", KV_REST_API_TOKEN: "t" };
+
+  it.each([
+    ["local", settings],
+    ["Vercel production", { ...settings, VERCEL: "1", VERCEL_ENV: "production" }],
+  ])("%s with the same Upstash settings accepts the same inquiry", async (_label, vars) => {
+    const env = readIntakeEnv(vars);
+    const fetchImpl = upstashOk();
+    const store = new UpstashSubmissionStore(env.upstashUrl!, env.upstashToken!, fetchImpl as unknown as typeof fetch);
+    expect(createSubmissionStore(env)?.name).toBe("upstash");
+    const res = await handleInquiry(req(validInquiry), deps(env, store));
+    expect(res).toMatchObject({ httpStatus: 200, body: { status: "sent" } });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([["local", {}], ["Vercel production", { VERCEL: "1", VERCEL_ENV: "production" }]])(
+    "%s with no provider settings is unconfigured (503), never a success",
+    async (_label, vars) => {
+      const env = readIntakeEnv(vars);
+      const res = await handleInquiry(req(validInquiry), deps(env, createSubmissionStore(env)));
+      expect(res).toMatchObject({ httpStatus: 503, body: { status: "unconfigured" } });
+    },
+  );
+
+  it("returns an error (not success) when the storage provider is down", async () => {
+    const down = vi.fn(async () => new Response("unavailable", { status: 503 }));
+    const store = new UpstashSubmissionStore("https://kv.example", "t", down as unknown as typeof fetch);
+    const d = deps(readIntakeEnv({ VERCEL: "1" }), store);
+    const res = await handleInquiry(req(validInquiry), d);
+    expect(res).toMatchObject({ httpStatus: 502, body: { status: "error" } });
+    expect(JSON.stringify(d.log.mock.calls)).toContain("store_upstash_upstash_503");
+  });
+});
+
+describe("setup diagnostics in logs", () => {
+  it("logs an unconfigured submission as an error with a setup hint and no personal data", async () => {
+    const { defaultLogger } = await import("@/lib/integrations/submission-guard");
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+    await handleInquiry(req(validInquiry), { ...deps(noEmail), log: defaultLogger("inquiry") });
+    const line = String(errorSpy.mock.calls[0]?.[0]);
+    expect(line).toContain('"outcome":"unconfigured"');
+    expect(line).toContain("KV_REST_API_URL");
+    expect(line).not.toMatch(/Jordan|jordan@example/);
+    errorSpy.mockRestore();
+    infoSpy.mockRestore();
   });
 });
 

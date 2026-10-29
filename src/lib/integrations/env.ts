@@ -24,8 +24,9 @@ export type IntakeEnv = {
   /** Send a short "we received it" email to the visitor/candidate after their message is delivered to us. */
   sendConfirmations: boolean;
   /**
-   * Where submissions are saved on disk (like an ATS inbox), so a submission is received even when email isn't set up.
-   * Default `.data/submissions` locally; off on Vercel, whose filesystem doesn't persist (Upstash is used there).
+   * Where submissions are saved on disk (like an ATS inbox), for long-running servers such as local development.
+   * Opt-in via `SUBMISSIONS_DIR` — there is deliberately no implicit default, so every environment behaves the same
+   * for the same settings. Ignored on Vercel, whose filesystem doesn't persist (use Upstash there).
    */
   submissionsDir?: string;
   hubspotToken?: string;
@@ -59,8 +60,7 @@ export function readIntakeEnv(env: Record<string, string | undefined> = process.
     businessTo: val(env.BUSINESS_CONTACT_EMAIL) ?? val(env.INQUIRY_TO_EMAIL) ?? company.contactEmail,
     hiringTo: val(env.HIRING_EMAIL) ?? company.careersEmail,
     sendConfirmations: val(env.SEND_CONFIRMATION_EMAILS)?.toLowerCase() === "true",
-    submissionsDir:
-      val(env.SUBMISSIONS_DIR)?.toLowerCase() === "off" ? undefined : (val(env.SUBMISSIONS_DIR) ?? (env.VERCEL ? undefined : ".data/submissions")),
+    submissionsDir: env.VERCEL || val(env.SUBMISSIONS_DIR)?.toLowerCase() === "off" ? undefined : val(env.SUBMISSIONS_DIR),
     hubspotToken: val(env.HUBSPOT_ACCESS_TOKEN),
     // Vercel's Storage tab ("Upstash for Redis") injects the KV_* names automatically; both spellings work.
     upstashUrl: val(env.UPSTASH_REDIS_REST_URL) ?? val(env.KV_REST_API_URL),

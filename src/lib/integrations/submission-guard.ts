@@ -103,7 +103,15 @@ export class DeliveredSubmissions {
   }
 }
 
+const SETUP_HINT =
+  "No storage or email provider is configured for this environment: set KV_REST_API_URL/KV_REST_API_TOKEN (Vercel Storage > Upstash for Redis) or SMTP_*/RESEND_API_KEY, then redeploy. See docs/GO_LIVE.md.";
+
+/** Structured logs; setup and delivery problems go to stderr so they show as errors in Vercel's logs. */
 export const defaultLogger =
   (event: string): Logger =>
-  (e) =>
-    console.info(JSON.stringify({ event, ...e }));
+  (e) => {
+    const problem = e.outcome === "unconfigured" || e.outcome === "delivery_failure";
+    const line = JSON.stringify({ event, ...e, ...(e.outcome === "unconfigured" ? { hint: SETUP_HINT } : {}) });
+    if (problem) console.error(line);
+    else console.info(line);
+  };

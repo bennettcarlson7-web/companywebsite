@@ -295,7 +295,12 @@ test.describe("API guards", () => {
   test("intake status reports provider kinds only, never secrets", async ({ request }) => {
     const res = await request.get("/api/intake-status");
     expect(res.status()).toBe(200);
-    expect(await res.json()).toEqual({ ready: true, storage: "file", email: "none" });
+    expect(await res.json()).toEqual({
+      ready: true,
+      storage: "file",
+      email: "none",
+      deployment: { environment: "local", commit: null, branch: null },
+    });
     expect(res.headers()["cache-control"]).toContain("no-store");
   });
 
