@@ -292,6 +292,13 @@ test.describe("API guards", () => {
     }
   });
 
+  test("intake status reports provider kinds only, never secrets", async ({ request }) => {
+    const res = await request.get("/api/intake-status");
+    expect(res.status()).toBe(200);
+    expect(await res.json()).toEqual({ ready: true, storage: "file", email: "none" });
+    expect(res.headers()["cache-control"]).toContain("no-store");
+  });
+
   test("each endpoint rejects the other track's payload", async ({ request }) => {
     expect((await request.post("/api/apply", { data: { payload: inquiry, website: "", elapsedMs: 9000 } })).status()).toBe(422);
     expect((await request.post("/api/inquiry", { data: { payload: application, website: "", elapsedMs: 9000 } })).status()).toBe(422);
