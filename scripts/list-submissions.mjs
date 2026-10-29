@@ -1,10 +1,13 @@
 // Lists saved applications and project inquiries, newest first.
-// Usage: npm run submissions [-- applications|inquiries] [-- --limit 20]
+// Usage: npm run submissions [-- applications|inquiries] [-- --limit 20] [-- --save-resumes]
 // Reads Upstash when UPSTASH_REDIS_REST_URL/TOKEN are set (production data), otherwise .data/submissions.
-import { readFile } from "node:fs/promises";
+// --save-resumes writes each attached résumé to .data/resumes/ (git-ignored).
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const args = process.argv.slice(2);
+const saveResumes = args.includes("--save-resumes");
+const resumeDir = path.resolve(".data/resumes");
 const only = args.find((a) => a === "applications" || a === "inquiries");
 const limitIdx = args.indexOf("--limit");
 const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) || 20 : 50;
@@ -51,8 +54,19 @@ for (const kind of kinds) {
     console.log(`\n${new Date(s.receivedAt).toLocaleString()}  ·  ${d.name} <${d.email}>`);
     if (kind === "application") {
       console.log(`  Role: ${d.roleTitle ?? d.role}`);
-      for (const [label, key] of [["LinkedIn", "linkedinUrl"], ["Portfolio", "portfolioUrl"], ["Résumé", "resumeUrl"]]) if (d[key]) console.log(`  ${label}: ${d[key]}`);
-      console.log(`  ${String(d.introduction ?? "").replace(/\n/g, "\n  ")}`);
+      if (d.resume?.filename) {
+        let saved = "";
+        if (saveResumes && d.resume.data) {
+          await mkdir(resumeDir, { recursive: true });
+          const file = path.join(resumeDir, `${s.id.slice(0, 8)}-${path.basename(d.resume.filename)}`);
+          await writeFile(file, Buffer.from(d.resume.data, "base64"));
+          saved = ` → saved to ${file}`;
+        }
+        console.log(`  Résumé: ${d.resume.filename}${saved}`);
+      }
+      for (const [label, key] of [["Video", "videoUrl"], ["LinkedIn", "linkedinUrl"], ["Portfolio", "portfolioUrl"], ["Résumé link", "resumeUrl"]]) if (d[key]) console.log(`  ${label}: ${d[key]}`);
+      // Older applications (before the video field) had a written introduction.
+      if (d.introduction) console.log(`  ${String(d.introduction).replace(/\n/g, "\n  ")}`);
     } else {
       console.log(`  Type: ${d.projectType ?? "-"}  Budget: ${d.budget ?? "-"}  Timeline: ${d.timeline ?? "-"}  Company: ${d.company ?? "-"}`);
       console.log(`  ${String(d.description ?? "").replace(/\n/g, "\n  ")}`);

@@ -13,7 +13,11 @@ export type EmailMessage = {
   subject: string;
   html: string;
   text: string;
+  /** Files sent with the message (e.g. a candidate's résumé). `content` is base64. */
+  attachments?: EmailAttachment[];
 };
+
+export type EmailAttachment = { filename: string; contentType: string; content: string };
 
 /** Sends one fully-formed message over SMTP. Injectable for tests. */
 export type SmtpSender = (message: EmailMessage & { from: string }) => Promise<void>;
@@ -50,7 +54,15 @@ function smtpSenderFor(smtp: NonNullable<IntakeEnv["smtp"]>): SmtpSender {
     socketTimeout: 15_000,
   });
   return async (m) => {
-    await transport.sendMail({ from: m.from, to: recipients(m.to), replyTo: m.replyTo, subject: m.subject, html: m.html, text: m.text });
+    await transport.sendMail({
+      from: m.from,
+      to: recipients(m.to),
+      replyTo: m.replyTo,
+      subject: m.subject,
+      html: m.html,
+      text: m.text,
+      attachments: m.attachments?.map((a) => ({ filename: a.filename, contentType: a.contentType, content: a.content, encoding: "base64" })),
+    });
   };
 }
 
@@ -90,8 +102,11 @@ export async function sendEmail(
         subject,
         html: message.html,
         text: message.text,
+        ...(message.attachments?.length
+          ? { attachments: message.attachments.map((a) => ({ filename: a.filename, content: a.content, content_type: a.contentType })) }
+          : {}),
       }),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(message.attachments?.length ? 25_000 : 10_000),
     });
     return { channel: "email", ok: res.ok, detail: res.ok ? undefined : `resend_${res.status}` };
   } catch (err) {

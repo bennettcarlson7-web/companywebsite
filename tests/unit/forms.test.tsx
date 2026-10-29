@@ -100,7 +100,12 @@ describe("CandidateApplicationForm", () => {
   async function fill(user: ReturnType<typeof userEvent.setup>) {
     await user.type(screen.getByLabelText(/^name/i), "Sam Okafor");
     await user.type(screen.getByLabelText(/^email/i), "sam@example.com");
-    await user.type(screen.getByLabelText(/introduce yourself/i), "I build reliable data pipelines and care about quality and testing.");
+    await user.type(screen.getByLabelText(/linkedin profile/i), "https://www.linkedin.com/in/sam-okafor");
+    await user.type(screen.getByLabelText(/video link/i), "https://www.loom.com/share/sam-okafor-intro");
+    await user.upload(
+      screen.getByLabelText(/upload your résumé/i),
+      new File(["%PDF-1.4\n% test résumé\n%%EOF\n"], "Sam Okafor CV.pdf", { type: "application/pdf" }),
+    );
     await user.click(screen.getByRole("checkbox"));
   }
 
@@ -139,6 +144,23 @@ describe("CandidateApplicationForm", () => {
     expect(screen.getByText("Senior Software Engineer — AI/ML")).toBeInTheDocument();
     expect((fetchFn.mock.calls[0] as unknown as [string])[0]).toBe("/api/apply");
     expect(sentBody(fetchFn).payload.role).toBe("senior-software-engineer-ai-ml");
+    // The résumé file travels with the application as base64, starting with the PDF signature.
+    expect(sentBody(fetchFn).payload.resume).toMatchObject({ name: "Sam Okafor CV.pdf", data: expect.stringMatching(/^JVBERi/) });
+  });
+
+  it("asks for a résumé and a video link, with the recording guidance, and no written introduction", async () => {
+    const fetchFn = mockFetch(200, { status: "sent" });
+    const user = userEvent.setup();
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
+    expect(screen.getByText(/please record a 1–2 minute video introducing yourself/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/introduce yourself/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/video link/i)).toBeRequired();
+    expect(screen.getByLabelText(/linkedin profile/i)).toBeRequired();
+    await user.click(screen.getByRole("button", { name: /submit application/i }));
+    const summary = await screen.findByRole("alert");
+    expect(summary).toHaveTextContent(/résumé/i);
+    expect(summary).toHaveTextContent(/candidate introduction video/i);
+    expect(fetchFn).not.toHaveBeenCalled();
   });
 
   it("falls back to a role-specific prefilled email when unconfigured — no false success", async () => {

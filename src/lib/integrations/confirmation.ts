@@ -1,4 +1,4 @@
-import { company, emailSubjects, siteConfig } from "@/lib/site-config";
+import { brandOwnershipStatement, company, emailSubjects, siteConfig } from "@/lib/site-config";
 import type { IntakeEnv } from "./env";
 import { escapeHtml, sendEmail, type DeliveryResult, type EmailMessage, type SmtpSender } from "./email";
 
@@ -19,14 +19,17 @@ const firstName = (name: string) =>
 
 function render(greetingName: string, paragraphs: string[], replyTo: string) {
   const signoff = `— The ${company.displayName} team`;
-  const text = [`Hi ${greetingName},`, "", ...paragraphs.flatMap((p) => [p, ""]), signoff, siteConfig.url].join("\n");
+  const ownership = brandOwnershipStatement();
+  const text = [`Hi ${greetingName},`, "", ...paragraphs.flatMap((p) => [p, ""]), signoff, siteConfig.url, ...(ownership ? ["", ownership] : [])].join("\n");
   const html = `<!doctype html><html><body style="font-family:system-ui,sans-serif;color:#101d35;line-height:1.6">
 <p>Hi ${escapeHtml(greetingName)},</p>
 ${paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("\n")}
 <p>${escapeHtml(signoff)}<br><a href="${escapeHtml(siteConfig.url)}" style="color:#1d4ed8">${escapeHtml(company.domain)}</a></p>
 <p style="color:#4a5a70;font-size:12px;margin-top:24px">You're receiving this because this address was entered on a form at ${escapeHtml(
     company.domain,
-  )}. If that wasn't you, you can ignore this email, or reply to ${escapeHtml(replyTo)} and we'll delete the submission.</p>
+  )}. If that wasn't you, you can ignore this email, or reply to ${escapeHtml(replyTo)} and we'll delete the submission.${
+    ownership ? ` ${escapeHtml(ownership)}` : ""
+  }</p>
 </body></html>`;
   return { text, html };
 }

@@ -62,6 +62,16 @@ export function JsonLd({ data }: { data: object | null }) {
 // Structured data only states facts we actually know. Nothing is emitted that would require
 // an absolute URL until NEXT_PUBLIC_SITE_URL is configured.
 
+/** The brand people recognize as `name`, with the registered entity behind it as `legalName`. */
+function brandOrganization() {
+  return {
+    "@type": "Organization",
+    name: siteConfig.name,
+    ...(siteConfig.legalName ? { legalName: siteConfig.legalName } : {}),
+    url: absoluteUrl("/"),
+  };
+}
+
 export function organizationJsonLd() {
   const url = absoluteUrl("/");
   if (!url) return null;
@@ -69,7 +79,8 @@ export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: siteConfig.legalName ?? siteConfig.name,
+    name: siteConfig.name,
+    ...(siteConfig.legalName ? { legalName: siteConfig.legalName } : {}),
     url,
     description: siteConfig.description,
     ...(siteConfig.contact.email ? { email: siteConfig.contact.email } : {}),
@@ -107,7 +118,7 @@ export function serviceJsonLd(service: { title: string; seoDescription: string; 
     description: service.seoDescription,
     url,
     serviceType: service.title,
-    provider: { "@type": "Organization", name: siteConfig.legalName ?? siteConfig.name, url: absoluteUrl("/") },
+    provider: brandOrganization(),
   };
 }
 
@@ -129,7 +140,7 @@ export function articleJsonLd(article: {
     datePublished: article.publishedAt,
     dateModified: article.updatedAt ?? article.publishedAt,
     mainEntityOfPage: url,
-    publisher: { "@type": "Organization", name: siteConfig.legalName ?? siteConfig.name, url: absoluteUrl("/") },
+    publisher: brandOrganization(),
   };
 }
 
@@ -180,7 +191,7 @@ export function jobPostingJsonLd(job: {
     datePosted: p.datePosted,
     ...(p.validThrough ? { validThrough: p.validThrough } : {}),
     employmentType: p.employmentType,
-    hiringOrganization: { "@type": "Organization", name: siteConfig.legalName ?? siteConfig.name, sameAs: absoluteUrl("/") },
+    hiringOrganization: { ...brandOrganization(), sameAs: absoluteUrl("/") },
     jobLocationType: "TELECOMMUTE",
     applicantLocationRequirements: { "@type": "Country", name: p.applicantLocationCountry },
     url,

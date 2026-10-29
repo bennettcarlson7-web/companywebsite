@@ -4,7 +4,7 @@ import { readIntakeEnv } from "@/lib/integrations/env";
 import { MemoryRateLimiter } from "@/lib/integrations/rate-limit";
 import { DeliveredSubmissions, type SubmissionRequest } from "@/lib/integrations/submission-guard";
 import { applicationSchema } from "@/lib/validation/job-application";
-import { sampleUuid, validApplication, validInquiry } from "./fixtures";
+import { samplePdf, sampleUuid, validApplication, validInquiry } from "./fixtures";
 
 const configured = readIntakeEnv({
   RESEND_API_KEY: "re_test",
@@ -37,6 +37,28 @@ describe("handleApplication", () => {
     expect(payload.from).toBe("NextMade Careers <careers@verified.example>");
     expect(payload.reply_to).toBe("sam@example.com");
     expect(payload.subject).toBe("[NextMade Careers] Senior Software Engineer — Data Engineering — Application");
+  });
+
+  it("attaches the candidate's résumé file to the hiring email", async () => {
+    const fetchImpl = okFetch();
+    await handleApplication(request(envelope()), deps(configured, fetchImpl as unknown as typeof fetch));
+    const payload = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(payload.attachments).toEqual([{ filename: "Sam Okafor CV.pdf", content: samplePdf, content_type: "application/pdf" }]);
+    expect(payload.text).toContain("Résumé: Sam Okafor CV.pdf");
+  });
+
+  it("accepts a full-size résumé but rejects bodies over the application cap", async () => {
+    const nearCap = { ...validApplication, resume: { name: "cv.pdf", data: "JVBERi" + "A".repeat(4_000_000) } };
+    expect((await handleApplication(request(envelope(nearCap)), deps(configured, okFetch() as unknown as typeof fetch))).httpStatus).toBe(200);
+    const tooBig = { ...validApplication, resume: { name: "cv.pdf", data: "JVBERi" + "A".repeat(4_500_000) } };
+    expect((await handleApplication(request(envelope(tooBig)), deps(configured))).httpStatus).toBe(413);
+  });
+
+  it("asks for a résumé when none is attached", async () => {
+    const noResume: Partial<typeof validApplication> = { ...validApplication };
+    delete noResume.resume;
+    const res = await handleApplication(request(envelope(noResume)), deps(configured, okFetch() as unknown as typeof fetch));
+    expect(res).toMatchObject({ httpStatus: 422, body: { status: "invalid", fieldErrors: { resume: expect.stringMatching(/résumé/) } } });
   });
 
   it("defaults the hiring inbox to careers@nextmadelabs.com, separate from client inquiries", async () => {
@@ -84,25 +106,27 @@ describe("handleApplication", () => {
     expect(res.httpStatus).not.toBe(429);
   });
 
-  it("never logs the candidate's name, email, introduction, or links", async () => {
+  it("never logs the candidate's name, email, links, video, or résumé", async () => {
     const d = deps(configured, okFetch() as unknown as typeof fetch);
     await handleApplication(request(envelope()), d);
     await handleApplication(request(envelope({ ...validApplication, email: "bad" })), d);
     const logged = JSON.stringify(d.log.mock.calls);
-    expect(logged).not.toMatch(/sam|okafor|pipelines|linkedin|github/i);
+    expect(logged).not.toMatch(/sam|okafor|loom|linkedin|github|\.pdf|JVBERi/i);
   });
 });
 
 describe("buildApplicationEmail", () => {
-  it("escapes content and shows links as plain text", () => {
+  it("escapes content and shows links, including the video, as plain text", () => {
     const app = applicationSchema.parse({
       ...validApplication,
       name: "<b>Sam</b>",
-      introduction: `<a href="https://evil.example">click</a> plus enough words to pass validation easily here.`,
+      videoUrl: `https://evil.example/"><script>alert(1)</script>`,
     });
-    const { html } = buildApplicationEmail(app);
+    const { html, text } = buildApplicationEmail(app);
     expect(html).not.toContain("<a href");
+    expect(html).not.toContain("<script>");
     expect(html).not.toContain("<b>Sam</b>");
     expect(html).toContain("https://github.com/example");
+    expect(text).toContain("Introduction video: https://evil.example/");
   });
 });

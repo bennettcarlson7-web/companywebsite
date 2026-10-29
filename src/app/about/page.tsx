@@ -8,6 +8,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { PageHero } from "@/components/sections/page-hero";
 import { CTASection } from "@/components/sections/cta-section";
 import { TeamCard } from "@/components/team/team-card";
+import { CompanyStructure } from "@/components/sections/company-structure";
 import type { IconName } from "@/types/content";
 
 export const metadata = buildMetadata({
@@ -26,7 +27,10 @@ const values: { title: string; body: string; icon: IconName }[] = [
 const engagementSteps = [
   { title: "Intro conversation", body: "A short, no-pressure conversation to understand your idea or problem and whether we're a good fit." },
   { title: "Discovery or proposal", body: "For clear projects, a written proposal. For fuzzier ones, a focused discovery phase first." },
-  { title: "Agreement", body: "A written contract covering scope, milestones, payment terms, ownership, and confidentiality." },
+  {
+    title: "Agreement",
+    body: `A written contract with ${siteConfig.legalName ?? siteConfig.name} covering scope, milestones, payment terms, ownership, and confidentiality.`,
+  },
   { title: "Build together", body: "Regular demos, written updates, and shared access to the work as it progresses." },
 ];
 
@@ -129,6 +133,24 @@ export default function AboutPage() {
           </Reveal>
         </Container>
       </Section>
+
+      {siteConfig.legalName && siteConfig.legalName !== siteConfig.name && (
+        <Section labelledBy="company-heading">
+          <Container className="grid items-center gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <SectionHeader
+                id="company-heading"
+                eyebrow="Our company"
+                title={`Who stands behind ${siteConfig.name}`}
+                description={`${siteConfig.name} is the brand you work with day to day. It is owned and operated by ${siteConfig.legalName}, the legal entity that signs agreements, issues invoices, and is responsible for your data.`}
+              />
+            </div>
+            <div className="lg:col-span-7">
+              <CompanyStructure />
+            </div>
+          </Container>
+        </Section>
+      )}
 
       <Section tone="mist" labelledBy="engagements-heading">
         <Container>

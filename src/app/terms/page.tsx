@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { copyrightHolder, mailtoHref, siteConfig } from "@/lib/site-config";
+import { copyrightHolder, mailtoHref, operatorName, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
 import { LegalPage } from "@/components/sections/legal-page";
 
@@ -15,8 +15,9 @@ export default function TermsPage() {
   return (
     <LegalPage title="Terms of Use" path="/terms" policy="terms">
       <p>
-        These terms govern your use of this website, operated by {holder}. By using the site, you agree to these terms.
-        They cover the website only; any client engagement is governed by a separate written agreement.
+        These terms govern your use of this website, operated by {operatorName()} (&ldquo;{siteConfig.name},&rdquo;
+        &ldquo;we,&rdquo; &ldquo;us&rdquo;). By using the site, you agree to these terms. They cover the website only;
+        any client engagement is governed by a separate written agreement with {holder}.
       </p>
 
       <h2>Using this website</h2>
@@ -48,7 +49,7 @@ export default function TermsPage() {
       <h2>Inquiries and proposals</h2>
       <p>
         Submitting an inquiry does not create a client relationship or obligate either party. Any services we provide
-        will be described in a separate written agreement, which controls over anything on this website.
+        will be described in a separate written agreement with {holder}, which controls over anything on this website.
       </p>
 
       <h2>Job listings and applications</h2>

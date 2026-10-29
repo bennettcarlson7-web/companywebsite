@@ -25,9 +25,13 @@ function optionalUrl(value: string | undefined): string | null {
 
 /** Owner-supplied company facts (Oct 2026). */
 export const company = {
-  /** Site brand, matching the legal company name (owner-confirmed Oct 29, 2026). */
+  /** Customer-facing brand used across the site (owner-confirmed Oct 30, 2026). */
   displayName: "NextMade",
-  legalName: "NextMade",
+  /**
+   * Legal and contracting entity that owns and operates the NextMade brand (owner-verified Oct 30, 2026).
+   * Shown where the law or clarity needs it: copyright line, policies, terms, structured data.
+   */
+  legalName: "Blossom Technologies LLC",
   market: "United States",
   /** Company domain (owner-supplied). DNS on Cloudflare; inbound mail via Cloudflare Email Routing. */
   domain: "nextmadelabs.com",
@@ -134,6 +138,24 @@ export function absoluteUrl(path = "/"): string | null {
 
 export function copyrightHolder(): string {
   return siteConfig.legalName ?? siteConfig.name;
+}
+
+/** "NextMade is a brand of Blossom Technologies LLC." — or `null` when brand and legal entity are the same. */
+export function brandOwnershipStatement(): string | null {
+  const legal = siteConfig.legalName;
+  return legal && legal !== siteConfig.name ? `${siteConfig.name} is a brand of ${legal}.` : null;
+}
+
+/** "NextMade (Blossom Technologies LLC)" for consent text, so people know who receives their data. */
+export function brandWithEntity(): string {
+  const legal = siteConfig.legalName;
+  return legal && legal !== siteConfig.name ? `${siteConfig.name} (${legal})` : siteConfig.name;
+}
+
+/** How the operator is named in policies: "Blossom Technologies LLC, which operates NextMade" or just the brand. */
+export function operatorName(): string {
+  const legal = siteConfig.legalName;
+  return legal && legal !== siteConfig.name ? `${legal}, which operates ${siteConfig.name}` : siteConfig.name;
 }
 
 /** Email subject lines, so both tracks are easy to filter in the shared inbox. */

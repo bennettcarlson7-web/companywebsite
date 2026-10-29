@@ -58,7 +58,9 @@ describe("one-click submissions without email", () => {
     const saved = JSON.parse(line!);
     expect(saved).toMatchObject({ id: sampleUuid, kind: "application" });
     expect(saved.data).toMatchObject({ name: "Sam Okafor", email: "sam@example.com", roleTitle: "Senior Software Engineer — Data Engineering" });
-    expect(saved.data.introduction).toBe(validApplication.introduction);
+    expect(saved.data.videoUrl).toBe(validApplication.videoUrl);
+    // The résumé file itself is kept with the application, so it survives even if the email fails.
+    expect(saved.data.resume).toMatchObject({ filename: "Sam Okafor CV.pdf", contentType: "application/pdf", data: validApplication.resume.data });
   });
 
   it("receives an inquiry by saving it", async () => {

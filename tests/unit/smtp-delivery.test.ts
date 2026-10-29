@@ -71,6 +71,9 @@ describe("delivery over SMTP", () => {
     expect(send.mock.calls[0]![0].to).toBe("careers@nextmadelabs.com");
     expect(send.mock.calls[0]![0].subject).toBe("[NextMade Careers] Senior Software Engineer — Data Engineering — Application");
     expect(send.mock.calls[0]![0].replyTo).toBe("sam@example.com");
+    expect(send.mock.calls[0]![0].attachments).toEqual([
+      { filename: "Sam Okafor CV.pdf", contentType: "application/pdf", content: validApplication.resume.data },
+    ]);
   });
 
   it("reports an error (never success) when the mail server rejects the login, and logs only the error code", async () => {
@@ -126,7 +129,8 @@ describe("confirmation emails", () => {
     expect(confirmation.to).toEqual(["sam@example.com"]);
     expect(confirmation.reply_to).toBe("careers@nextmadelabs.com");
     expect(confirmation.subject).toBe("We received your application: Senior Software Engineer — Data Engineering — NextMade");
-    expect(confirmation.text).not.toContain(validApplication.introduction);
+    expect(confirmation.text).not.toContain(validApplication.videoUrl);
+    expect(confirmation.attachments).toBeUndefined(); // the résumé goes only to us, never back out
   });
 
   it("never confirms when our own delivery failed", async () => {

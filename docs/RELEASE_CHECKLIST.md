@@ -55,7 +55,7 @@ Legend: **PASS** = verified by an automated test or a direct check · **FAIL** =
 | Domain `nextmadelabs.com`: inquiries → hello@, applications → careers@, sender notifications@ via Resend (preferred over SMTP) | PASS (mocked) | `smtp-delivery.test.ts`, `handle-*.test.ts`, `content-integrity.test.ts` |
 | Confirmation emails: only after our copy is delivered; Reply-To hello@/careers@; never echo visitor text; failure doesn't change result | PASS (mocked) | `smtp-delivery.test.ts` "confirmation emails" |
 | Two new concept projects labeled "not a client project" | PASS | E2E counts 5 labels; routes return 200 |
-| Legal name NextMade; Privacy Policy active (no draft label/placeholders; 24/12-month retention); Terms still Draft | PASS | Unit `content-integrity.test.ts`; E2E "legal and hiring terms" |
+| Brand NextMade, a brand of Blossom Technologies LLC (legal entity); Privacy Policy active (no draft label/placeholders; 24/12-month retention); Terms still Draft | PASS | Unit `content-integrity.test.ts`; E2E "legal and hiring terms" |
 | Job terms: remote worldwide outside U.S., full-time, USD 2,000/month on cards, job pages, FAQ | PASS | Unit + E2E |
 | **Real email delivered to a company inbox** | **NOT TESTED — NOT VERIFIED, requires credentials** | Mailbox password not available |
 | Upstash distributed rate limiting against a live Redis | NOT TESTED — requires credentials | Code path unit-tested only via the interface |

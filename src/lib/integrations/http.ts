@@ -11,9 +11,9 @@ export function clientIp(headers: Headers): string {
 }
 
 /** Reads a public form POST into the framework-agnostic shape the handlers expect, or `null` if oversized. */
-export async function readSubmission(request: Request): Promise<SubmissionRequest | null> {
+export async function readSubmission(request: Request, maxBytes: number = SUBMISSION_LIMITS.bodyBytes): Promise<SubmissionRequest | null> {
   const declared = Number(request.headers.get("content-length") ?? 0);
-  if (declared > SUBMISSION_LIMITS.bodyBytes) return null;
+  if (declared > maxBytes) return null;
   return {
     rawBody: await request.text(),
     contentType: request.headers.get("content-type"),

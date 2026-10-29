@@ -3,8 +3,8 @@ import { getTeam, initialsOf } from "@/content/team";
 import { getJobs, UNCONFIRMED_DETAIL } from "@/content/jobs";
 import { getProjects } from "@/content/projects";
 import { articleMeta, todayInUsPacific } from "@/content/insights/meta";
-import { company, siteConfig } from "@/lib/site-config";
-import { jobPostingJsonLd } from "@/lib/seo";
+import { brandOwnershipStatement, brandWithEntity, company, copyrightHolder, operatorName, siteConfig } from "@/lib/site-config";
+import { jobPostingJsonLd, organizationJsonLd } from "@/lib/seo";
 
 describe("owner-supplied facts", () => {
   it("lists the five team members with exact names and roles, in order", () => {
@@ -52,10 +52,19 @@ describe("owner-supplied facts", () => {
     expect(UNCONFIRMED_DETAIL).toBe("Shared during the hiring process");
   });
 
-  it("uses the confirmed legal name and an active (non-draft) Privacy Policy", () => {
-    expect(company.legalName).toBe("NextMade");
+  it("shows NextMade as a brand of the verified legal entity, with an active Privacy Policy", () => {
     expect(siteConfig.name).toBe("NextMade");
+    expect(company.legalName).toBe("Blossom Technologies LLC");
+    expect(copyrightHolder()).toBe("Blossom Technologies LLC");
+    expect(brandOwnershipStatement()).toBe("NextMade is a brand of Blossom Technologies LLC.");
+    expect(brandWithEntity()).toBe("NextMade (Blossom Technologies LLC)");
+    expect(operatorName()).toBe("Blossom Technologies LLC, which operates NextMade");
     expect(siteConfig.legal.privacy.draft).toBe(false);
+  });
+
+  it("gives search engines the brand as name and the LLC as legalName", () => {
+    const org = organizationJsonLd();
+    expect(org).toMatchObject({ "@type": "Organization", name: "NextMade", legalName: "Blossom Technologies LLC" });
   });
 
   it("uses the company domain and the owner-chosen client and hiring inboxes", () => {

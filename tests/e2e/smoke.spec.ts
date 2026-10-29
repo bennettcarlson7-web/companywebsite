@@ -170,12 +170,25 @@ test.describe("careers flow", () => {
 
     await page.getByLabel(/^Name/).fill("Sam Okafor");
     await page.getByLabel(/^Email/).fill("sam@example.com");
-    await page.getByLabel("Introduce yourself").fill("I build reliable data pipelines and care about quality and testing.");
+    await expect(summary).toContainText("LinkedIn:");
+    await page.getByLabel(/^LinkedIn profile/).fill("https://www.linkedin.com/in/sam-okafor");
+    await expect(summary).toContainText("Résumé");
+    await expect(summary).toContainText("Candidate Introduction Video:");
+    await expect(page.getByLabel(/^Introduce yourself/)).toHaveCount(0);
+    await page.getByLabel(/^Upload your résumé/).setInputFiles({
+      name: "Sam Okafor CV.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4\n% e2e test résumé\n%%EOF\n"),
+    });
+    await expect(page.getByRole("button", { name: "Remove Sam Okafor CV.pdf" })).toBeVisible();
+    await expect(page.getByText(/record a 1–2 minute video introducing yourself/)).toBeVisible();
+    await page.getByLabel(/^Video link/).fill("https://www.loom.com/share/example");
     await page.getByRole("checkbox").check();
     await fillDelay(page);
     await page.getByRole("button", { name: "Submit Application" }).click();
 
-    await expect(page.getByText(/we received your application/i)).toBeVisible();
+    // Generous wait: the résumé is read and uploaded, and the parallel suite can load a dev machine heavily.
+    await expect(page.getByText(/we received your application/i)).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Senior Software Engineer — Data Engineering").first()).toBeVisible();
     await expect(page.getByRole("heading", { name: /couldn.t send/i })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Send by Email" })).toHaveCount(0);
@@ -277,7 +290,15 @@ test.describe("project inquiry form", () => {
 
 test.describe("API guards", () => {
   const inquiry = { name: "Bot", email: "bot@example.com", projectType: "mvp", description: "Automated submission with enough characters.", consent: true };
-  const application = { name: "Bot", email: "bot@example.com", role: "talent-recruiter", introduction: "x".repeat(60), consent: true };
+  const application = {
+    name: "Bot",
+    email: "bot@example.com",
+    role: "talent-recruiter",
+    resume: { name: "cv.pdf", data: Buffer.from("%PDF-1.4\n%%EOF\n").toString("base64") },
+    videoUrl: "https://www.loom.com/share/example",
+    linkedinUrl: "https://www.linkedin.com/in/example",
+    consent: true,
+  };
 
   test("both endpoints reject automated and cross-origin submissions, and accept genuine ones", async ({ request }) => {
     for (const [path, payload] of [["/api/inquiry", inquiry], ["/api/apply", application]] as const) {
@@ -325,9 +346,22 @@ test.describe("legal and hiring terms", () => {
     await expect(page.locator("main")).not.toContainText("[");
     await expect(page.getByText(/up to 24 months/i)).toBeVisible();
     await expect(page.getByText(/up to 12 months/i)).toBeVisible();
-    await expect(page.locator("footer")).toContainText("NextMade");
+    await expect(page.locator("footer")).toContainText("Blossom Technologies LLC. All rights reserved.");
+    await expect(page.locator("footer")).toContainText("NextMade is a brand of Blossom Technologies LLC.");
+    await expect(page.locator("main")).toContainText("Blossom Technologies LLC, which operates NextMade");
     await page.goto("/terms");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("(Draft)");
+    await expect(page.locator("main")).toContainText("operated by Blossom Technologies LLC, which operates NextMade");
+  });
+
+  test("about page explains who stands behind the NextMade brand", async ({ page }) => {
+    await page.goto("/about");
+    const structure = page.getByRole("figure", { name: /company structure/i });
+    await expect(page.getByRole("heading", { name: "Who stands behind NextMade" })).toBeVisible();
+    await expect(structure).toContainText("Blossom Technologies LLC");
+    await expect(structure).toContainText("Legal and contracting entity");
+    await expect(structure).toContainText("Customer-facing technology brand · nextmadelabs.com");
+    for (const unit of ["Clients", "Engineering", "Recruitment"]) await expect(structure).toContainText(unit);
   });
 
   test("job pages show the confirmed location, type, and pay", async ({ page }) => {

@@ -9,14 +9,18 @@ export const validInquiry = {
   consent: true,
 };
 
+/** A tiny but real-looking PDF (correct leading bytes), as the form sends it: file name + base64 content. */
+export const samplePdf = Buffer.from("%PDF-1.4\n% NextMade test résumé\n%%EOF\n").toString("base64");
+export const sampleResume = { name: "Sam Okafor CV.pdf", data: samplePdf };
+
 export const validApplication = {
   name: "Sam Okafor",
   email: "sam@example.com",
   role: "senior-software-engineer-data-engineering",
-  introduction: "I've spent the last few years building batch and streaming pipelines and care a lot about data quality.",
+  resume: sampleResume,
+  videoUrl: "https://www.loom.com/share/sam-okafor-intro",
   linkedinUrl: "https://www.linkedin.com/in/example",
   portfolioUrl: "https://github.com/example",
-  resumeUrl: "",
   consent: true,
 };
 

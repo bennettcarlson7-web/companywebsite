@@ -1,49 +1,79 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type FormEvent, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode, type RefObject } from "react";
 import Link from "next/link";
-import { CircleCheck, Copy, Mail, TriangleAlert } from "lucide-react";
+import { CircleCheck, Copy, FileText, Mail, TriangleAlert, Upload, X } from "lucide-react";
 import { getJob, getJobs } from "@/content/jobs";
 import {
   APPLICATION_LIMITS,
   applicationFieldErrors,
   applicationSchema,
+  RESUME_ACCEPT,
   type Application,
   type ApplicationField,
   type ApplicationFieldErrors,
 } from "@/lib/validation/job-application";
-import { emailSubjects, mailtoHref, siteConfig } from "@/lib/site-config";
+import { brandWithEntity, emailSubjects, mailtoHref } from "@/lib/site-config";
 import { track } from "@/lib/analytics";
+import { cn } from "@/lib/utils";
 import { buttonClasses } from "@/components/ui/button";
 import { ErrorSummary, FailureMessage, Field, Honeypot, inputProps, RequiredNote, SubmitButton, useIntakeSubmission } from "./form-kit";
 
-const fieldOrder: ApplicationField[] = ["role", "name", "email", "introduction", "linkedinUrl", "portfolioUrl", "resumeUrl", "consent"];
+const fieldOrder: ApplicationField[] = ["role", "name", "email", "linkedinUrl", "resume", "videoUrl", "portfolioUrl", "consent"];
 const fieldLabels: Record<ApplicationField, string> = {
   role: "Role",
   name: "Name",
   email: "Email",
-  introduction: "Introduction",
+  resume: "Résumé",
+  videoUrl: "Candidate Introduction Video",
   linkedinUrl: "LinkedIn",
   portfolioUrl: "Portfolio or GitHub",
-  resumeUrl: "Résumé link",
   consent: "Consent",
 };
+
+const VIDEO_HINT =
+  "Please record a 1–2 minute video introducing yourself, highlighting your professional background, relevant experience, and why you're interested in joining our team.";
 
 function applicationEmailSubject(roleSlug?: string): string {
   return emailSubjects.application((roleSlug && getJob(roleSlug)?.title) || "General interest");
 }
+
+const fileSize = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 
 function summaryText(a: Application) {
   return [
     `Role: ${getJob(a.role)?.title ?? a.role}`,
     `Name: ${a.name}`,
     `Email: ${a.email}`,
-    `LinkedIn: ${a.linkedinUrl ?? "Not provided"}`,
+    `Résumé: ${a.resume.filename} (please attach it to your email)`,
+    `Introduction video: ${a.videoUrl}`,
+    `LinkedIn: ${a.linkedinUrl}`,
     `Portfolio / GitHub: ${a.portfolioUrl ?? "Not provided"}`,
-    `Résumé link: ${a.resumeUrl ?? "Not provided"}`,
-    "",
-    a.introduction,
   ].join("\n");
+}
+
+/** File → base64 (without the data: URL prefix). */
+function readAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function FormSection({ step, title, children }: { step: number; title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-6 border-t border-line pt-8 first-of-type:border-t-0 first-of-type:pt-0">
+      <h3 className="flex items-center gap-3 text-lg font-semibold text-navy-900">
+        <span aria-hidden="true" className="grid size-8 place-items-center rounded-full bg-cobalt-50 text-sm font-bold text-cobalt-700 ring-1 ring-cobalt-100">
+          {step}
+        </span>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
 }
 
 // Read ?role= on the client without making the page dynamic: the server renders no preselection, and the
@@ -69,7 +99,8 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
   const { status, setStatus, retryAfter, submit, resetAttempt } = useIntakeSubmission<ApplicationFieldErrors>("/api/apply");
   const [errors, setErrors] = useState<ApplicationFieldErrors>({});
   const [submitted, setSubmitted] = useState<Application | null>(null);
-  const [introLength, setIntroLength] = useState(0);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const resumeInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (status === "sent" || status === "unconfigured") resultRef.current?.focus();
@@ -85,20 +116,31 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
     e.preventDefault();
     if (status === "submitting") return;
     const fd = new FormData(e.currentTarget);
+    const file = resumeFile && resumeFile.size > 0 ? resumeFile : null;
+    let resume: { name: string; data: string } | undefined;
+    const fileError =
+      file && file.size > APPLICATION_LIMITS.resumeBytes ? "Please keep your résumé under 3 MB." : undefined;
+    if (file && !fileError) {
+      try {
+        resume = { name: file.name, data: await readAsBase64(file) };
+      } catch {
+        resume = { name: file.name, data: "" };
+      }
+    }
     const raw = {
       role: String(fd.get("role") ?? ""),
       name: String(fd.get("name") ?? ""),
       email: String(fd.get("email") ?? ""),
-      introduction: String(fd.get("introduction") ?? ""),
+      resume,
+      videoUrl: String(fd.get("videoUrl") ?? ""),
       linkedinUrl: String(fd.get("linkedinUrl") ?? ""),
       portfolioUrl: String(fd.get("portfolioUrl") ?? ""),
-      resumeUrl: String(fd.get("resumeUrl") ?? ""),
       consent: fd.get("consent") === "on",
     };
 
     const parsed = applicationSchema.safeParse(raw);
-    if (!parsed.success) {
-      showErrors(applicationFieldErrors(parsed.error));
+    if (!parsed.success || fileError) {
+      showErrors({ ...(parsed.success ? {} : applicationFieldErrors(parsed.error)), ...(fileError ? { resume: fileError } : {}) });
       setStatus("invalid");
       return;
     }
@@ -111,7 +153,6 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
     track({ name: "job_application_submitted", props: { outcome: result.status, role: parsed.data.role } });
   }
 
-  const roleTitle = getJob(role)?.title;
 
   if (status === "sent") {
     return (
@@ -152,70 +193,129 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
         <ErrorSummary summaryRef={summaryRef} idPrefix={formId} errors={errors} order={fieldOrder} labels={fieldLabels} />
         <RequiredNote id={fid("required-note")} />
 
-        <Field id={fid("role")} label="Role" required error={errors.role}>
-          <select
-            name="role"
-            required
-            value={role}
-            onChange={(e) => setSelectedRole(e.currentTarget.value)}
-            {...inputProps(fid("role"), errors.role)}
-          >
-            <option value="" disabled>
-              Choose a role…
-            </option>
-            {getJobs().map((j) => (
-              <option key={j.slug} value={j.slug}>
-                {j.title}
+        <FormSection step={1} title="About you">
+          <Field id={fid("role")} label="Role" required error={errors.role}>
+            <select
+              name="role"
+              required
+              value={role}
+              onChange={(e) => setSelectedRole(e.currentTarget.value)}
+              {...inputProps(fid("role"), errors.role)}
+            >
+              <option value="" disabled>
+                Choose a role…
               </option>
-            ))}
-          </select>
-        </Field>
-
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Field id={fid("name")} label="Name" required error={errors.name}>
-            <input name="name" type="text" autoComplete="name" maxLength={APPLICATION_LIMITS.name} required {...inputProps(fid("name"), errors.name)} />
+              {getJobs().map((j) => (
+                <option key={j.slug} value={j.slug}>
+                  {j.title}
+                </option>
+              ))}
+            </select>
           </Field>
-          <Field id={fid("email")} label="Email" required error={errors.email}>
-            <input name="email" type="email" autoComplete="email" inputMode="email" maxLength={APPLICATION_LIMITS.email} required {...inputProps(fid("email"), errors.email)} />
-          </Field>
-        </div>
 
-        <Field
-          id={fid("introduction")}
-          label="Introduce yourself"
-          required
-          hint={`A few sentences is plenty: what you've worked on recently${roleTitle ? `, and why the ${roleTitle} role interests you` : ", and which kind of work interests you"}.`}
-          error={errors.introduction}
-        >
-          <textarea
-            name="introduction"
-            rows={6}
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Field id={fid("name")} label="Name" required error={errors.name}>
+              <input name="name" type="text" autoComplete="name" maxLength={APPLICATION_LIMITS.name} required {...inputProps(fid("name"), errors.name)} />
+            </Field>
+            <Field id={fid("email")} label="Email" required error={errors.email}>
+              <input name="email" type="email" autoComplete="email" inputMode="email" maxLength={APPLICATION_LIMITS.email} required {...inputProps(fid("email"), errors.email)} />
+            </Field>
+          </div>
+
+          <Field id={fid("linkedinUrl")} label="LinkedIn profile" required hint="https://www.linkedin.com/in/…" error={errors.linkedinUrl}>
+            <input
+              name="linkedinUrl"
+              type="url"
+              inputMode="url"
+              autoComplete="url"
+              placeholder="https://www.linkedin.com/in/"
+              required
+              maxLength={APPLICATION_LIMITS.url}
+              {...inputProps(fid("linkedinUrl"), errors.linkedinUrl)}
+            />
+          </Field>
+        </FormSection>
+
+        <FormSection step={2} title="Résumé">
+          <Field id={fid("resume")} label="Upload your résumé" required hint="PDF or Word (.pdf, .doc, .docx) · up to 3 MB" error={errors.resume}>
+            <div
+              className={cn(
+                "relative rounded-2xl border-2 border-dashed bg-paper p-6 text-center transition-colors focus-within:border-cobalt-600 focus-within:ring-2 focus-within:ring-cobalt-600/25 hover:border-cobalt-300",
+                errors.resume ? "border-danger-600" : "border-line-strong",
+              )}
+            >
+              {resumeFile ? (
+                <div className="flex items-center justify-between gap-4 text-left">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <FileText aria-hidden="true" className="size-8 shrink-0 text-cobalt-700" />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-navy-900">{resumeFile.name}</span>
+                      <span className="block text-sm text-slate-600">{fileSize(resumeFile.size)}</span>
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResumeFile(null);
+                      if (resumeInput.current) resumeInput.current.value = "";
+                      resetAttempt();
+                    }}
+                    className={buttonClasses({ variant: "ghost", className: "relative z-10 shrink-0" })}
+                  >
+                    <X aria-hidden="true" className="size-4" />
+                    Remove<span className="sr-only"> {resumeFile.name}</span>
+                  </button>
+                </div>
+              ) : (
+                <div aria-hidden="true">
+                  <Upload className="mx-auto size-8 text-cobalt-700" />
+                  <p className="mt-2 font-medium text-navy-900">
+                    <span className="text-cobalt-700 underline underline-offset-2">Choose a file</span> or drag it here
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">PDF, DOC or DOCX · max 3 MB</p>
+                </div>
+              )}
+              <input
+                ref={resumeInput}
+                id={fid("resume")}
+                name="resume"
+                type="file"
+                accept={RESUME_ACCEPT}
+                required
+                aria-invalid={errors.resume ? true : undefined}
+                aria-describedby={[`${fid("resume")}-hint`, errors.resume ? `${fid("resume")}-error` : null].filter(Boolean).join(" ")}
+                onChange={(e) => setResumeFile(e.currentTarget.files?.[0] ?? null)}
+                className={cn("absolute inset-0 size-full cursor-pointer opacity-0", resumeFile && "pointer-events-none")}
+              />
+            </div>
+          </Field>
+        </FormSection>
+
+        <FormSection step={3} title="Candidate Introduction Video">
+          <Field
+            id={fid("videoUrl")}
+            label="Video link"
             required
-            maxLength={APPLICATION_LIMITS.introMax}
-            onChange={(e) => setIntroLength(e.currentTarget.value.length)}
-            {...inputProps(fid("introduction"), errors.introduction, fid("intro-count"))}
-          />
-          <p id={fid("intro-count")} className="mt-1.5 text-right text-xs text-slate-600">
-            {introLength.toLocaleString("en-US")} / {APPLICATION_LIMITS.introMax.toLocaleString("en-US")}
-          </p>
-        </Field>
-
-        <fieldset className="space-y-6 rounded-2xl bg-paper p-5 ring-1 ring-line">
-          <legend className="px-1 text-sm font-semibold text-navy-900">Links (optional)</legend>
-          <p className="-mt-3 text-sm text-slate-600">
-            Share whatever best shows your work. Please use links rather than attachments — we don&apos;t accept file
-            uploads.
-          </p>
-          <Field id={fid("linkedinUrl")} label="LinkedIn profile" hint="Optional · https://www.linkedin.com/in/…" error={errors.linkedinUrl}>
-            <input name="linkedinUrl" type="url" inputMode="url" autoComplete="url" maxLength={APPLICATION_LIMITS.url} {...inputProps(fid("linkedinUrl"), errors.linkedinUrl)} />
+            hint={`${VIDEO_HINT} Paste a link to it (YouTube unlisted, Loom, Google Drive, etc.) and make sure anyone with the link can view it.`}
+            error={errors.videoUrl}
+          >
+            <input
+              name="videoUrl"
+              type="url"
+              inputMode="url"
+              placeholder="https://"
+              required
+              maxLength={APPLICATION_LIMITS.url}
+              {...inputProps(fid("videoUrl"), errors.videoUrl)}
+            />
           </Field>
+        </FormSection>
+
+        <FormSection step={4} title="Your work (optional)">
           <Field id={fid("portfolioUrl")} label="Portfolio or GitHub" hint="Optional" error={errors.portfolioUrl}>
             <input name="portfolioUrl" type="url" inputMode="url" maxLength={APPLICATION_LIMITS.url} {...inputProps(fid("portfolioUrl"), errors.portfolioUrl)} />
           </Field>
-          <Field id={fid("resumeUrl")} label="Résumé link" hint="Optional · a view-only link to a PDF or doc (Google Drive, Dropbox, etc.)" error={errors.resumeUrl}>
-            <input name="resumeUrl" type="url" inputMode="url" maxLength={APPLICATION_LIMITS.url} {...inputProps(fid("resumeUrl"), errors.resumeUrl)} />
-          </Field>
-        </fieldset>
+        </FormSection>
 
         <Honeypot id={fid("website")} />
 
@@ -231,7 +331,7 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
               className="mt-0.5 size-5 shrink-0 rounded border-line-strong accent-cobalt-600"
             />
             <label htmlFor={fid("consent")} className="text-sm leading-relaxed text-slate-700">
-              I agree that {siteConfig.name} may use the information I&apos;ve shared to review my application and contact
+              I agree that {brandWithEntity()} may use the information I&apos;ve shared to review my application and contact
               me about it, as described in the{" "}
               <a href="/privacy" className="font-medium text-cobalt-700 underline underline-offset-2">
                 Privacy Policy
@@ -283,7 +383,7 @@ function UnconfiguredPanel({
       <h2 className="mt-4 text-xl font-semibold">We couldn&apos;t send your application from the website</h2>
       <p className="mt-2 leading-relaxed text-warning-800">
         Your application has not been sent yet. Your details are ready below — send them to our hiring team by email
-        with one click, or copy them into your own email.
+        with one click, or copy them into your own email. Please attach your résumé to that email.
       </p>
       <label htmlFor="application-summary" className="mt-5 block text-sm font-semibold text-navy-900">
         Your application summary

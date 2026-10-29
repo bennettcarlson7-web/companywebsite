@@ -212,7 +212,7 @@ export const candidateFaqs: FAQ[] = [
   {
     question: "What does the application involve?",
     answer:
-      "A short form: your name, email, the role, a brief introduction, and optional links to your work or résumé. No cover letter or file upload required.",
+      "A short form: your name, email, LinkedIn profile, the role, your résumé (PDF or Word, up to 3 MB), and a link to a 1–2 minute introduction video. You can also add a portfolio or GitHub link. No cover letter required.",
   },
   {
     question: "Will I hear back?",

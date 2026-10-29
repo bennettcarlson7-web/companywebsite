@@ -1,4 +1,4 @@
-import { copyrightHolder, mailtoHref, siteConfig } from "@/lib/site-config";
+import { copyrightHolder, mailtoHref, operatorName, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
 import { LegalPage } from "@/components/sections/legal-page";
 
@@ -19,9 +19,9 @@ export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy" path="/privacy" policy="privacy">
       <p>
-        This policy explains what information {holder} (&ldquo;we,&rdquo; &ldquo;us&rdquo;) collects through this website
-        and by email, how we use it, how long we keep it, and the choices you have. We aim to collect as little as
-        possible. {holder} is responsible for the information described here.
+        This policy explains what information {operatorName()} (&ldquo;{siteConfig.name},&rdquo; &ldquo;we,&rdquo;
+        &ldquo;us&rdquo;) collects through this website and by email, how we use it, how long we keep it, and the choices
+        you have. We aim to collect as little as possible. {holder} is responsible for the information described here.
       </p>
 
       <h2>Information we collect</h2>
@@ -32,9 +32,10 @@ export default function PrivacyPage() {
       </p>
       <p>
         <strong>Job applications.</strong> When you apply for a role, we collect your name, email, the role you&apos;re
-        applying for, your introduction, and any optional links you provide (such as LinkedIn, a portfolio or GitHub
-        profile, or a résumé link). We don&apos;t accept file uploads through the website. If you share a link, the
-        content behind it stays under your control; you can revoke access at any time.
+        applying for, your LinkedIn profile link, the résumé file you upload, a link to your introduction video, and an
+        optional portfolio or GitHub link. Your résumé
+        is stored with your application and sent to our hiring inbox by email. If you share a link, the content behind
+        it stays under your control; you can revoke access at any time.
       </p>
       <p>
         <strong>Emails you send us.</strong> If you email us directly, we receive whatever you include in your message.

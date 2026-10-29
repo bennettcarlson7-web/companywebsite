@@ -37,7 +37,7 @@ export default function CareersPage() {
               id="roles-heading"
               eyebrow={`${jobs.length} open roles`}
               title="Roles we're recruiting for"
-              description="Each role has its own page with the details. Applying takes a few minutes — a short introduction and optional links are all we ask for."
+              description="Each role has its own page with the details. Applying takes a few minutes — your résumé and a short introduction video are all we ask for."
             />
           </div>
           <Reveal>

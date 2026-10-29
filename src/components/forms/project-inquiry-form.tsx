@@ -14,7 +14,7 @@ import {
   type InquiryField,
   type InquiryFieldErrors,
 } from "@/lib/validation/project-inquiry";
-import { emailSubjects, mailtoHref, siteConfig } from "@/lib/site-config";
+import { brandWithEntity, emailSubjects, mailtoHref, siteConfig } from "@/lib/site-config";
 import { track } from "@/lib/analytics";
 import { buttonClasses } from "@/components/ui/button";
 import { ErrorSummary, FailureMessage, Field, Honeypot, inputProps, RequiredNote, SubmitButton, useIntakeSubmission } from "./form-kit";
@@ -213,7 +213,7 @@ export function ProjectInquiryForm({
               className="mt-0.5 size-5 shrink-0 rounded border-line-strong accent-cobalt-600"
             />
             <label htmlFor={fid("consent")} className="text-sm leading-relaxed text-slate-700">
-              I agree that {siteConfig.name} may use the information I&apos;ve shared to respond to this inquiry, as
+              I agree that {brandWithEntity()} may use the information I&apos;ve shared to respond to this inquiry, as
               described in the{" "}
               <a href="/privacy" className="font-medium text-cobalt-700 underline underline-offset-2">
                 Privacy Policy

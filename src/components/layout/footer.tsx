@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { Mail } from "lucide-react";
-import { copyrightHolder, siteConfig } from "@/lib/site-config";
+import { brandOwnershipStatement, copyrightHolder, siteConfig } from "@/lib/site-config";
 import { getServices } from "@/content/services";
 import { Container } from "@/components/ui/primitives";
 import { Logo } from "@/components/ui/logo";
@@ -78,6 +78,7 @@ export async function Footer() {
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
           <p>
             © {year} {copyrightHolder()}. All rights reserved.
+            {brandOwnershipStatement() && <span className="block text-slate-400 md:inline md:pl-1">{brandOwnershipStatement()}</span>}
           </p>
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <li>

@@ -4,6 +4,8 @@ import { z } from "zod";
 export const SUBMISSION_LIMITS = {
   /** Raw request body cap, in bytes. Comfortably above the sum of any form's field limits. */
   bodyBytes: 16_384,
+  /** Applications carry a base64 résumé (≤ 3 MB → ~4 MB encoded); stays under Vercel's 4.5 MB request cap. */
+  applicationBodyBytes: 4_400_000,
   /** Submissions faster than this after the form rendered are treated as automated. */
   minFillMs: 2500,
 } as const;

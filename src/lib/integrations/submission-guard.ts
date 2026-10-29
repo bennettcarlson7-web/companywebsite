@@ -22,7 +22,7 @@ export type Logger = (event: Record<string, unknown>) => void;
  */
 export async function guardSubmission(
   req: SubmissionRequest,
-  opts: { namespace: string; limiter: RateLimiter; log: Logger },
+  opts: { namespace: string; limiter: RateLimiter; log: Logger; maxBodyBytes?: number },
 ): Promise<GuardResult> {
   const { log } = opts;
   const reject = (httpStatus: number, reason?: string): GuardResult => {
@@ -41,7 +41,7 @@ export async function guardSubmission(
   }
 
   if (!req.contentType?.toLowerCase().startsWith("application/json")) return reject(415);
-  if (new TextEncoder().encode(req.rawBody).length > SUBMISSION_LIMITS.bodyBytes) return reject(413, "too_large");
+  if (new TextEncoder().encode(req.rawBody).length > (opts.maxBodyBytes ?? SUBMISSION_LIMITS.bodyBytes)) return reject(413, "too_large");
 
   let limit;
   try {

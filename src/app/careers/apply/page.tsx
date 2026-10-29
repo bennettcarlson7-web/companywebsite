@@ -10,7 +10,7 @@ import { CandidateApplicationForm } from "@/components/forms/candidate-applicati
 export const metadata = {
   ...buildMetadata({
     title: "Apply — Careers",
-    description: `Apply to join ${siteConfig.name}. A short introduction and optional links are all we ask for.`,
+    description: `Apply to join ${siteConfig.name}. Upload your résumé and share a short introduction video.`,
     path: "/careers/apply",
   }),
   // A form page has no search value of its own; the job pages are what should be indexed.
@@ -31,7 +31,7 @@ export default function ApplyPage() {
           <h1 className="mt-8 text-4xl font-semibold tracking-tight sm:text-5xl">Apply to join {siteConfig.name}</h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600">
             This is our careers application — separate from project inquiries. It takes a few minutes: tell us who you
-            are and what you&apos;d like to work on.
+            are, upload your résumé, and share a short introduction video.
           </p>
         </Container>
       </section>
@@ -61,7 +61,7 @@ export default function ApplyPage() {
               <ul className="mt-3 space-y-2 text-sm leading-relaxed text-slate-600">
                 <li>Used only to review your application and contact you about it.</li>
                 <li>Seen only by the people involved in hiring.</li>
-                <li>No file uploads — share links you control and can revoke.</li>
+                <li>Your résumé goes straight to our hiring team and is kept no longer than our retention policy allows.</li>
                 <li>
                   Ask us to delete it any time. See the{" "}
                   <Link href="/privacy" className="font-medium text-cobalt-700 underline">
