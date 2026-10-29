@@ -6,6 +6,7 @@ import { buildMetadata } from "@/lib/seo";
 import { Container, Section } from "@/components/ui/primitives";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CandidateApplicationForm } from "@/components/forms/candidate-application-form";
+import { countries } from "@/lib/countries";
 
 export const metadata = {
   ...buildMetadata({
@@ -40,7 +41,7 @@ export default function ApplyPage() {
         <Container className="grid gap-10 lg:grid-cols-12">
           <div className="rounded-[1.75rem] bg-white p-6 shadow-card ring-1 ring-line sm:p-8 lg:col-span-8">
             <h2 className="mb-6 text-2xl font-semibold tracking-tight">Your application</h2>
-            <CandidateApplicationForm hiringEmail={getCareersEmail()} />
+            <CandidateApplicationForm hiringEmail={getCareersEmail()} countries={countries} />
           </div>
 
           <aside className="space-y-6 lg:col-span-4">

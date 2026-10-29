@@ -8,6 +8,8 @@ import {
   APPLICATION_LIMITS,
   applicationFieldErrors,
   applicationSchema,
+  ageRangeOptions,
+  genderOptions,
   RESUME_ACCEPT,
   type Application,
   type ApplicationField,
@@ -19,11 +21,30 @@ import { cn } from "@/lib/utils";
 import { buttonClasses } from "@/components/ui/button";
 import { ErrorSummary, FailureMessage, Field, Honeypot, inputProps, RequiredNote, SubmitButton, useIntakeSubmission } from "./form-kit";
 
-const fieldOrder: ApplicationField[] = ["role", "name", "email", "linkedinUrl", "resume", "videoUrl", "portfolioUrl", "consent"];
+const fieldOrder: ApplicationField[] = [
+  "role",
+  "name",
+  "email",
+  "phone",
+  "city",
+  "country",
+  "linkedinUrl",
+  "resume",
+  "videoUrl",
+  "portfolioUrl",
+  "gender",
+  "ageRange",
+  "consent",
+];
 const fieldLabels: Record<ApplicationField, string> = {
   role: "Role",
   name: "Name",
   email: "Email",
+  phone: "Phone",
+  city: "City",
+  country: "Country",
+  gender: "Gender",
+  ageRange: "Age range",
   resume: "Résumé",
   videoUrl: "Candidate Introduction Video",
   linkedinUrl: "LinkedIn",
@@ -45,6 +66,8 @@ function summaryText(a: Application) {
     `Role: ${getJob(a.role)?.title ?? a.role}`,
     `Name: ${a.name}`,
     `Email: ${a.email}`,
+    `Phone: ${a.phone}`,
+    `Location: ${a.city}, ${a.country}`,
     `Résumé: ${a.resume.filename} (please attach it to your email)`,
     `Introduction video: ${a.videoUrl}`,
     `LinkedIn: ${a.linkedinUrl}`,
@@ -86,7 +109,14 @@ const getSearch = () => window.location.search;
 const getServerSearch = () => "";
 
 /** `hiringEmail` is used only behind "email" links and the fallback; it's never printed on the page. */
-export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string }) {
+export function CandidateApplicationForm({
+  hiringEmail,
+  countries,
+}: {
+  hiringEmail: string;
+  /** Country picker options, named on the server so server and browser render identical text. */
+  countries: { code: string; name: string }[];
+}) {
   const formId = useId();
   const summaryRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -100,6 +130,7 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
   const [errors, setErrors] = useState<ApplicationFieldErrors>({});
   const [submitted, setSubmitted] = useState<Application | null>(null);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [country, setCountry] = useState("");
   const resumeInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -131,6 +162,11 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
       role: String(fd.get("role") ?? ""),
       name: String(fd.get("name") ?? ""),
       email: String(fd.get("email") ?? ""),
+      phone: String(fd.get("phone") ?? ""),
+      city: String(fd.get("city") ?? ""),
+      country: String(fd.get("country") ?? ""),
+      gender: String(fd.get("gender") ?? ""),
+      ageRange: String(fd.get("ageRange") ?? ""),
       resume,
       videoUrl: String(fd.get("videoUrl") ?? ""),
       linkedinUrl: String(fd.get("linkedinUrl") ?? ""),
@@ -219,6 +255,49 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
             </Field>
             <Field id={fid("email")} label="Email" required error={errors.email}>
               <input name="email" type="email" autoComplete="email" inputMode="email" maxLength={APPLICATION_LIMITS.email} required {...inputProps(fid("email"), errors.email)} />
+            </Field>
+          </div>
+
+          <Field id={fid("phone")} label="Phone" required hint="Include your country code, e.g. +63 917 123 4567" error={errors.phone}>
+            <input
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              placeholder="+"
+              maxLength={APPLICATION_LIMITS.phone}
+              required
+              {...inputProps(fid("phone"), errors.phone)}
+            />
+          </Field>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Field id={fid("city")} label="City" required error={errors.city}>
+              <input name="city" type="text" autoComplete="address-level2" maxLength={APPLICATION_LIMITS.city} required {...inputProps(fid("city"), errors.city)} />
+            </Field>
+            <Field id={fid("country")} label="Country" required error={errors.country}>
+              <select
+                name="country"
+                required
+                autoComplete="country"
+                value={country}
+                onChange={(e) => setCountry(e.currentTarget.value)}
+                {...inputProps(fid("country"), errors.country, country === "US" ? fid("country-note") : undefined)}
+              >
+                <option value="" disabled>
+                  Choose a country…
+                </option>
+                {countries.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              {country === "US" && (
+                <p id={fid("country-note")} className="mt-2 text-sm text-warning-800">
+                  Please note: our current roles are open to candidates based outside the United States.
+                </p>
+              )}
             </Field>
           </div>
 
@@ -315,6 +394,40 @@ export function CandidateApplicationForm({ hiringEmail }: { hiringEmail: string 
           <Field id={fid("portfolioUrl")} label="Portfolio or GitHub" hint="Optional" error={errors.portfolioUrl}>
             <input name="portfolioUrl" type="url" inputMode="url" maxLength={APPLICATION_LIMITS.url} {...inputProps(fid("portfolioUrl"), errors.portfolioUrl)} />
           </Field>
+        </FormSection>
+
+        <FormSection step={5} title="Voluntary self-identification (optional)">
+          <p className="-mt-2 text-sm leading-relaxed text-slate-600">
+            Answering is completely voluntary, and choosing &ldquo;Decline to self-identify&rdquo; has no effect on your
+            application. Your answers are not used to make hiring decisions. Gender is included with your application;
+            your age range is stored separately and isn&apos;t shown to the people reviewing applications.
+          </p>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Field id={fid("gender")} label="Gender" hint="Optional" error={errors.gender}>
+              <select name="gender" defaultValue="" {...inputProps(fid("gender"), errors.gender)}>
+                <option value="">Decline to self-identify</option>
+                {genderOptions
+                  .filter((o) => o.value !== "decline")
+                  .map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+            <Field id={fid("ageRange")} label="Age range" hint="Optional" error={errors.ageRange}>
+              <select name="ageRange" defaultValue="" {...inputProps(fid("ageRange"), errors.ageRange)}>
+                <option value="">Decline to self-identify</option>
+                {ageRangeOptions
+                  .filter((o) => o.value !== "decline")
+                  .map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+              </select>
+            </Field>
+          </div>
         </FormSection>
 
         <Honeypot id={fid("website")} />

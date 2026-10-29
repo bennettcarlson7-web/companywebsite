@@ -171,7 +171,13 @@ test.describe("careers flow", () => {
     await page.getByLabel(/^Name/).fill("Sam Okafor");
     await page.getByLabel(/^Email/).fill("sam@example.com");
     await expect(summary).toContainText("LinkedIn:");
+    await expect(summary).toContainText("Phone:");
+    await expect(summary).not.toContainText("Gender:");
+    await page.getByLabel(/^Phone/).fill("+234 803 555 0142");
+    await page.getByLabel(/^City/).fill("Lagos");
+    await page.getByLabel(/^Country/).selectOption("NG");
     await page.getByLabel(/^LinkedIn profile/).fill("https://www.linkedin.com/in/sam-okafor");
+    await page.getByLabel(/^Gender/).selectOption("man");
     await expect(summary).toContainText("Résumé");
     await expect(summary).toContainText("Candidate Introduction Video:");
     await expect(page.getByLabel(/^Introduce yourself/)).toHaveCount(0);
@@ -297,6 +303,9 @@ test.describe("API guards", () => {
     resume: { name: "cv.pdf", data: Buffer.from("%PDF-1.4\n%%EOF\n").toString("base64") },
     videoUrl: "https://www.loom.com/share/example",
     linkedinUrl: "https://www.linkedin.com/in/example",
+    phone: "+63 917 123 4567",
+    city: "Manila",
+    country: "PH",
     consent: true,
   };
 

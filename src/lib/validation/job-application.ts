@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { jobs } from "@/content/jobs";
+import { countryCodes } from "@/lib/countries";
 import { consentField, emailField, nameField, singleLine, toFieldErrors, type SubmissionResponse } from "./shared";
 
 /** Candidate job application. Deliberately separate from the project-inquiry schema. */
@@ -7,6 +8,8 @@ import { consentField, emailField, nameField, singleLine, toFieldErrors, type Su
 export const APPLICATION_LIMITS = {
   name: 100,
   email: 254,
+  phone: 25,
+  city: 100,
   url: 300,
   /** Résumé file cap. Base64 adds a third, and Vercel caps request bodies at 4.5 MB. */
   resumeBytes: 3 * 1024 * 1024,
@@ -57,6 +60,44 @@ const resumeField = z
 
 const jobSlugs = jobs.map((j) => j.slug) as [string, ...string[]];
 
+/** Voluntary self-identification. Empty or "decline" both mean the candidate chose not to answer. */
+export const genderOptions = [
+  { value: "woman", label: "Woman" },
+  { value: "man", label: "Man" },
+  { value: "non-binary", label: "Non-binary" },
+  { value: "another", label: "Another gender identity" },
+  { value: "decline", label: "Decline to self-identify" },
+] as const;
+
+export const ageRangeOptions = [
+  { value: "18-24", label: "18–24" },
+  { value: "25-34", label: "25–34" },
+  { value: "35-44", label: "35–44" },
+  { value: "45-54", label: "45–54" },
+  { value: "55-64", label: "55–64" },
+  { value: "65+", label: "65 or older" },
+  { value: "decline", label: "Decline to self-identify" },
+] as const;
+
+const optionalChoice = <T extends readonly { value: string }[]>(opts: T, message: string) =>
+  z
+    .string()
+    .optional()
+    .transform((v) => v || "decline")
+    .pipe(z.enum(opts.map((o) => o.value) as [T[number]["value"], ...T[number]["value"][]], { error: message }));
+
+/** International phone: digits with optional +, spaces, dashes, dots, and parentheses; 7–15 digits (E.164 max). */
+const phoneField = z
+  .string({ error: "Please enter your phone number." })
+  .transform(singleLine)
+  .superRefine((v, ctx) => {
+    if (!v) return void ctx.addIssue({ code: "custom", message: "Please enter your phone number." });
+    const digits = v.replace(/\D/g, "").length;
+    if (!/^\+?[\d\s().-]+$/.test(v) || digits < 7 || digits > 15 || v.length > APPLICATION_LIMITS.phone) {
+      ctx.addIssue({ code: "custom", message: "Please enter a valid phone number with country code, like +63 917 123 4567." });
+    }
+  });
+
 /**
  * Public link (optional unless piped into a required string): https only, no embedded credentials, a real hostname, bounded length.
  * Links are rendered as escaped text in notification emails, so a malicious URL can't execute anything,
@@ -93,6 +134,19 @@ const safeLink = (label: string, hostCheck?: { test: (host: string) => boolean; 
 export const applicationSchema = z.object({
   name: nameField(APPLICATION_LIMITS.name),
   email: emailField(APPLICATION_LIMITS.email),
+  phone: phoneField,
+  city: z
+    .string({ error: "Please enter the city you live in." })
+    .transform(singleLine)
+    .pipe(
+      z
+        .string()
+        .min(2, { error: "Please enter the city you live in." })
+        .max(APPLICATION_LIMITS.city, { error: `Please keep the city under ${APPLICATION_LIMITS.city} characters.` }),
+    ),
+  country: z.enum(countryCodes as [string, ...string[]], { error: "Please choose the country you live in." }),
+  gender: optionalChoice(genderOptions, "Please choose one of the listed options."),
+  ageRange: optionalChoice(ageRangeOptions, "Please choose one of the listed options."),
   role: z.enum(jobSlugs, { error: "Please choose the role you're applying for." }),
   resume: resumeField,
   videoUrl: safeLink("video").pipe(z.string({ error: "Please add a link to your 1–2 minute introduction video." })),

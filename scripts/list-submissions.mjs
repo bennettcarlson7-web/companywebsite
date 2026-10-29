@@ -49,11 +49,17 @@ console.log(`Source: ${source}\n`);
 for (const kind of kinds) {
   const items = upstashUrl && upstashToken ? await fromUpstash(kind) : await fromFile(kind);
   console.log(`== ${kind === "application" ? "Applications" : "Project inquiries"} (${items.length}) ==`);
+  const ageRanges = {};
   for (const s of items) {
     const d = s.data ?? {};
     console.log(`\n${new Date(s.receivedAt).toLocaleString()}  ·  ${d.name} <${d.email}>`);
     if (kind === "application") {
       console.log(`  Role: ${d.roleTitle ?? d.role}`);
+      if (d.phone) console.log(`  Phone: ${d.phone}`);
+      if (d.city) console.log(`  Location: ${d.city}, ${d.countryName ?? d.country}`);
+      if (d.gender) console.log(`  Gender: ${d.gender === "decline" ? "Not disclosed" : d.gender}`);
+      // Age range is voluntary self-identification: reported only as totals below, never per candidate.
+      if (d.ageRange) ageRanges[d.ageRange] = (ageRanges[d.ageRange] ?? 0) + 1;
       if (d.resume?.filename) {
         let saved = "";
         if (saveResumes && d.resume.data) {
@@ -71,6 +77,10 @@ for (const kind of kinds) {
       console.log(`  Type: ${d.projectType ?? "-"}  Budget: ${d.budget ?? "-"}  Timeline: ${d.timeline ?? "-"}  Company: ${d.company ?? "-"}`);
       console.log(`  ${String(d.description ?? "").replace(/\n/g, "\n  ")}`);
     }
+  }
+  if (Object.keys(ageRanges).length) {
+    const totals = Object.entries(ageRanges).map(([range, n]) => `${range === "decline" ? "Declined" : range}: ${n}`);
+    console.log(`\n  Age range (voluntary, totals only): ${totals.join(" · ")}`);
   }
   console.log("");
 }

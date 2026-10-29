@@ -19,12 +19,44 @@ describe("applicationSchema (candidate applications)", () => {
 
   it("requires name, email, LinkedIn, role, résumé, introduction video, and consent", () => {
     const errors = errorsFor({ name: "", email: "", role: "", videoUrl: "", linkedinUrl: "", consent: false });
-    expect(Object.keys(errors).sort()).toEqual(["consent", "email", "linkedinUrl", "name", "resume", "role", "videoUrl"]);
+    expect(Object.keys(errors).sort()).toEqual([
+      "city",
+      "consent",
+      "country",
+      "email",
+      "linkedinUrl",
+      "name",
+      "phone",
+      "resume",
+      "role",
+      "videoUrl",
+    ]);
     expect(errorsFor({ ...validApplication, linkedinUrl: "" }).linkedinUrl).toMatch(/LinkedIn profile link/);
     expect(errorsFor({ ...validApplication, videoUrl: "" }).videoUrl).toMatch(/introduction video/);
     const withoutVideo: Partial<typeof validApplication> = { ...validApplication };
     delete withoutVideo.videoUrl;
     expect(errorsFor(withoutVideo).videoUrl).toMatch(/introduction video/);
+  });
+
+  it("accepts international phone numbers and rejects malformed ones", () => {
+    for (const phone of ["+63 917 123 4567", "+44 (20) 7946-0958", "0803.555.0142"]) {
+      expect(applicationSchema.safeParse({ ...validApplication, phone }).success).toBe(true);
+    }
+    for (const phone of ["12345", "call me", "+1 555 0100 ext 9", "+1234567890123456"]) {
+      expect(errorsFor({ ...validApplication, phone }).phone).toMatch(/valid phone/);
+    }
+  });
+
+  it("requires a real country code and a city", () => {
+    expect(errorsFor({ ...validApplication, country: "ZZ" }).country).toMatch(/country/);
+    expect(errorsFor({ ...validApplication, city: " " }).city).toMatch(/city/);
+  });
+
+  it("treats gender and age range as voluntary: blank means declined, unknown values are rejected", () => {
+    const blank = applicationSchema.parse({ ...validApplication, gender: "", ageRange: undefined });
+    expect([blank.gender, blank.ageRange]).toEqual(["decline", "decline"]);
+    expect(errorsFor({ ...validApplication, gender: "robot" }).gender).toBeDefined();
+    expect(errorsFor({ ...validApplication, ageRange: "17" }).ageRange).toBeDefined();
   });
 
   it("no longer has a written introduction field", () => {

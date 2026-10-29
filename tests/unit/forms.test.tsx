@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ProjectInquiryForm } from "@/components/forms/project-inquiry-form";
 import { CandidateApplicationForm } from "@/components/forms/candidate-application-form";
+import { countries } from "@/lib/countries";
 import { isActivePath } from "@/components/layout/nav-links";
 
 const EMAIL = "hello@nextmadelabs.com";
@@ -100,6 +101,9 @@ describe("CandidateApplicationForm", () => {
   async function fill(user: ReturnType<typeof userEvent.setup>) {
     await user.type(screen.getByLabelText(/^name/i), "Sam Okafor");
     await user.type(screen.getByLabelText(/^email/i), "sam@example.com");
+    await user.type(screen.getByLabelText(/^phone/i), "+234 803 555 0142");
+    await user.type(screen.getByLabelText(/^city/i), "Lagos");
+    await user.selectOptions(screen.getByLabelText(/^country/i), "NG");
     await user.type(screen.getByLabelText(/linkedin profile/i), "https://www.linkedin.com/in/sam-okafor");
     await user.type(screen.getByLabelText(/video link/i), "https://www.loom.com/share/sam-okafor-intro");
     await user.upload(
@@ -111,20 +115,20 @@ describe("CandidateApplicationForm", () => {
 
   it("preselects the role from ?role= in the URL", () => {
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
     expect(screen.getByLabelText(/^role/i)).toHaveValue("talent-recruiter");
   });
 
   it("ignores unknown roles in the URL", () => {
     window.history.replaceState({}, "", "/careers/apply?role=chief-wizard");
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
     expect(screen.getByLabelText(/^role/i)).toHaveValue("");
   });
 
   it("validates required fields and link safety before sending", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
     await user.type(screen.getByLabelText(/portfolio or github/i), "javascript:alert(1)");
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     const summary = await screen.findByRole("alert");
@@ -137,7 +141,7 @@ describe("CandidateApplicationForm", () => {
     window.history.replaceState({}, "", "/careers/apply?role=senior-software-engineer-ai-ml");
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByText(/we received your application/i)).toBeInTheDocument();
@@ -145,17 +149,23 @@ describe("CandidateApplicationForm", () => {
     expect((fetchFn.mock.calls[0] as unknown as [string])[0]).toBe("/api/apply");
     expect(sentBody(fetchFn).payload.role).toBe("senior-software-engineer-ai-ml");
     // The résumé file travels with the application as base64, starting with the PDF signature.
+    expect(sentBody(fetchFn).payload).toMatchObject({ phone: "+234 803 555 0142", city: "Lagos", country: "NG", gender: "", ageRange: "" });
     expect(sentBody(fetchFn).payload.resume).toMatchObject({ name: "Sam Okafor CV.pdf", data: expect.stringMatching(/^JVBERi/) });
   });
 
   it("asks for a résumé and a video link, with the recording guidance, and no written introduction", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
     expect(screen.getByText(/please record a 1–2 minute video introducing yourself/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/introduce yourself/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/video link/i)).toBeRequired();
     expect(screen.getByLabelText(/linkedin profile/i)).toBeRequired();
+    for (const label of [/^phone/i, /^city/i, /^country/i]) expect(screen.getByLabelText(label)).toBeRequired();
+    for (const label of [/^gender/i, /^age range/i]) {
+      expect(screen.getByLabelText(label)).not.toBeRequired();
+      expect(screen.getByLabelText(label)).toHaveDisplayValue("Decline to self-identify");
+    }
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     const summary = await screen.findByRole("alert");
     expect(summary).toHaveTextContent(/résumé/i);
@@ -167,7 +177,7 @@ describe("CandidateApplicationForm", () => {
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
     mockFetch(503, { status: "unconfigured" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByRole("heading", { name: /couldn.t send your application/i })).toBeInTheDocument();
@@ -180,7 +190,7 @@ describe("CandidateApplicationForm", () => {
     mockFetch(502, { status: "error" });
     const user = userEvent.setup();
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByText(/your application was not sent/i)).toBeInTheDocument();

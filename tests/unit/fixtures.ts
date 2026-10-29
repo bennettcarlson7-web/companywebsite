@@ -16,6 +16,11 @@ export const sampleResume = { name: "Sam Okafor CV.pdf", data: samplePdf };
 export const validApplication = {
   name: "Sam Okafor",
   email: "sam@example.com",
+  phone: "+234 803 555 0142",
+  city: "Lagos",
+  country: "NG",
+  gender: "man",
+  ageRange: "25-34",
   role: "senior-software-engineer-data-engineering",
   resume: sampleResume,
   videoUrl: "https://www.loom.com/share/sam-okafor-intro",

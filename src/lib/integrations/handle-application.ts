@@ -1,7 +1,14 @@
 import { getJob } from "@/content/jobs";
 import { emailSubjects, siteConfig } from "@/lib/site-config";
-import { applicationFieldErrors, applicationSchema, type Application, type ApplicationResponse } from "@/lib/validation/job-application";
-import { SUBMISSION_LIMITS } from "@/lib/validation/shared";
+import { countryName } from "@/lib/countries";
+import {
+  applicationFieldErrors,
+  applicationSchema,
+  genderOptions,
+  type Application,
+  type ApplicationResponse,
+} from "@/lib/validation/job-application";
+import { labelFor, SUBMISSION_LIMITS } from "@/lib/validation/shared";
 import { isApplicationDeliveryConfigured, type IntakeEnv } from "./env";
 import type { RateLimiter } from "./rate-limit";
 import { renderNotificationHtml, sendEmail, type SmtpSender } from "./email";
@@ -31,13 +38,19 @@ export function applicationSubject(roleTitle: string): string {
 
 const fileSize = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 const resumeLabel = (app: Application) => `${app.resume.filename} (${fileSize(app.resume.size)}, attached)`;
+const locationLabel = (app: Application) => `${app.city}, ${countryName(app.country)}`;
+const genderLabel = (app: Application) => (app.gender === "decline" ? "Not disclosed" : labelFor(genderOptions, app.gender));
 
+// The age range is voluntary self-identification kept out of reviewer-facing email (saved with the record only).
 export function formatApplicationText(app: Application): string {
   const role = getJob(app.role)?.title ?? app.role;
   return [
     `Role: ${role}`,
     `Name: ${app.name}`,
     `Email: ${app.email}`,
+    `Phone: ${app.phone}`,
+    `Location: ${locationLabel(app)}`,
+    `Gender: ${genderLabel(app)}`,
     `Résumé: ${resumeLabel(app)}`,
     `Introduction video: ${app.videoUrl}`,
     `LinkedIn: ${app.linkedinUrl}`,
@@ -54,6 +67,9 @@ export function buildApplicationEmail(app: Application) {
       ["Role", role],
       ["Name", app.name],
       ["Email", app.email],
+      ["Phone", app.phone],
+      ["Location", locationLabel(app)],
+      ["Gender", genderLabel(app)],
       ["Résumé", resumeLabel(app)],
       ["LinkedIn", app.linkedinUrl],
       ["Portfolio / GitHub", app.portfolioUrl ?? "Not provided"],
@@ -102,7 +118,7 @@ export async function handleApplication(req: SubmissionRequest, deps: Applicatio
     id: guard.submissionId ?? crypto.randomUUID(),
     kind: "application",
     receivedAt: new Date().toISOString(),
-    data: { ...parsed.data, roleTitle: getJob(parsed.data.role)?.title ?? parsed.data.role },
+    data: { ...parsed.data, roleTitle: getJob(parsed.data.role)?.title ?? parsed.data.role, countryName: countryName(parsed.data.country) },
   });
   let emailed: Awaited<ReturnType<typeof sendEmail>> | null = null;
   if (emailConfigured) {
