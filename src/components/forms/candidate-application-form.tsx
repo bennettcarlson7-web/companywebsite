@@ -399,8 +399,8 @@ export function CandidateApplicationForm({
         <FormSection step={5} title="Voluntary self-identification (optional)">
           <p className="-mt-2 text-sm leading-relaxed text-slate-600">
             Answering is completely voluntary, and choosing &ldquo;Decline to self-identify&rdquo; has no effect on your
-            application. Your answers are not used to make hiring decisions. Gender is included with your application;
-            your age range is stored separately and isn&apos;t shown to the people reviewing applications.
+            application. Your answers are not used to make hiring decisions. If you answer, they are included with your
+            application.
           </p>
           <div className="grid gap-6 sm:grid-cols-2">
             <Field id={fid("gender")} label="Gender" hint="Optional" error={errors.gender}>

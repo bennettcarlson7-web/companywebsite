@@ -47,7 +47,7 @@ describe("handleApplication", () => {
     expect(payload.text).toContain("Résumé: Sam Okafor CV.pdf");
   });
 
-  it("shows phone, location, and gender to reviewers but never the voluntary age range", async () => {
+  it("shows phone, location, gender, and age range to reviewers", async () => {
     const fetchImpl = okFetch();
     await handleApplication(request(envelope()), deps(configured, fetchImpl as unknown as typeof fetch));
     const payload = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
@@ -55,11 +55,13 @@ describe("handleApplication", () => {
       expect(body).toContain("+234 803 555 0142");
       expect(body).toContain("Lagos, Nigeria");
       expect(body).toContain("Man");
-      expect(body).not.toMatch(/25-34|25–34|age range/i);
+      expect(body).toContain("25–34");
     }
     const declined = okFetch();
-    await handleApplication(request(envelope({ ...validApplication, gender: "" })), deps(configured, declined as unknown as typeof fetch));
-    expect(JSON.parse(String((declined.mock.calls[0] as unknown as [string, RequestInit])[1].body)).text).toContain("Gender: Not disclosed");
+    await handleApplication(request(envelope({ ...validApplication, gender: "", ageRange: "" })), deps(configured, declined as unknown as typeof fetch));
+    const text = JSON.parse(String((declined.mock.calls[0] as unknown as [string, RequestInit])[1].body)).text;
+    expect(text).toContain("Gender: Not disclosed");
+    expect(text).toContain("Age range: Not disclosed");
   });
 
   it("accepts a full-size résumé but rejects bodies over the application cap", async () => {

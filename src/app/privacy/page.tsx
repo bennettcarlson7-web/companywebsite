@@ -35,8 +35,8 @@ export default function PrivacyPage() {
         applying for, your phone number, the city and country you live in, your LinkedIn profile link, the résumé file
         you upload, a link to your introduction video, and an optional portfolio or GitHub link. You may also choose to
         share your gender and age range; both are voluntary, &ldquo;Decline to self-identify&rdquo; is always
-        available, and these answers are not used to make hiring decisions. Your age range is kept with your
-        application record but left out of the copy our reviewers read. Your résumé
+        available, and these answers are not used to make hiring decisions. If you answer, they are kept with your
+        application. Your résumé
         is stored with your application and sent to our hiring inbox by email. If you share a link, the content behind
         it stays under your control; you can revoke access at any time.
       </p>

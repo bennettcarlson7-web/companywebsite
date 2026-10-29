@@ -59,7 +59,6 @@ describe("one-click submissions without email", () => {
     expect(saved).toMatchObject({ id: sampleUuid, kind: "application" });
     expect(saved.data).toMatchObject({ name: "Sam Okafor", email: "sam@example.com", roleTitle: "Senior Software Engineer — Data Engineering" });
     expect(saved.data.videoUrl).toBe(validApplication.videoUrl);
-    // Voluntary age range is kept on the record (just not in the reviewer email).
     expect(saved.data).toMatchObject({ phone: "+234 803 555 0142", city: "Lagos", country: "NG", countryName: "Nigeria", ageRange: "25-34" });
     // The résumé file itself is kept with the application, so it survives even if the email fails.
     expect(saved.data.resume).toMatchObject({ filename: "Sam Okafor CV.pdf", contentType: "application/pdf", data: validApplication.resume.data });

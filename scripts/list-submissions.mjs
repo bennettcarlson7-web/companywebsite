@@ -58,8 +58,10 @@ for (const kind of kinds) {
       if (d.phone) console.log(`  Phone: ${d.phone}`);
       if (d.city) console.log(`  Location: ${d.city}, ${d.countryName ?? d.country}`);
       if (d.gender) console.log(`  Gender: ${d.gender === "decline" ? "Not disclosed" : d.gender}`);
-      // Age range is voluntary self-identification: reported only as totals below, never per candidate.
-      if (d.ageRange) ageRanges[d.ageRange] = (ageRanges[d.ageRange] ?? 0) + 1;
+      if (d.ageRange) {
+        console.log(`  Age range: ${d.ageRange === "decline" ? "Not disclosed" : d.ageRange}`);
+        ageRanges[d.ageRange] = (ageRanges[d.ageRange] ?? 0) + 1;
+      }
       if (d.resume?.filename) {
         let saved = "";
         if (saveResumes && d.resume.data) {
@@ -80,7 +82,7 @@ for (const kind of kinds) {
   }
   if (Object.keys(ageRanges).length) {
     const totals = Object.entries(ageRanges).map(([range, n]) => `${range === "decline" ? "Declined" : range}: ${n}`);
-    console.log(`\n  Age range (voluntary, totals only): ${totals.join(" · ")}`);
+    console.log(`\n  Age range totals: ${totals.join(" · ")}`);
   }
   console.log("");
 }

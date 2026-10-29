@@ -4,6 +4,7 @@ import { countryName } from "@/lib/countries";
 import {
   applicationFieldErrors,
   applicationSchema,
+  ageRangeOptions,
   genderOptions,
   type Application,
   type ApplicationResponse,
@@ -40,8 +41,8 @@ const fileSize = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 
 const resumeLabel = (app: Application) => `${app.resume.filename} (${fileSize(app.resume.size)}, attached)`;
 const locationLabel = (app: Application) => `${app.city}, ${countryName(app.country)}`;
 const genderLabel = (app: Application) => (app.gender === "decline" ? "Not disclosed" : labelFor(genderOptions, app.gender));
+const ageLabel = (app: Application) => (app.ageRange === "decline" ? "Not disclosed" : labelFor(ageRangeOptions, app.ageRange));
 
-// The age range is voluntary self-identification kept out of reviewer-facing email (saved with the record only).
 export function formatApplicationText(app: Application): string {
   const role = getJob(app.role)?.title ?? app.role;
   return [
@@ -51,6 +52,7 @@ export function formatApplicationText(app: Application): string {
     `Phone: ${app.phone}`,
     `Location: ${locationLabel(app)}`,
     `Gender: ${genderLabel(app)}`,
+    `Age range: ${ageLabel(app)}`,
     `Résumé: ${resumeLabel(app)}`,
     `Introduction video: ${app.videoUrl}`,
     `LinkedIn: ${app.linkedinUrl}`,
@@ -70,6 +72,7 @@ export function buildApplicationEmail(app: Application) {
       ["Phone", app.phone],
       ["Location", locationLabel(app)],
       ["Gender", genderLabel(app)],
+      ["Age range", ageLabel(app)],
       ["Résumé", resumeLabel(app)],
       ["LinkedIn", app.linkedinUrl],
       ["Portfolio / GitHub", app.portfolioUrl ?? "Not provided"],
