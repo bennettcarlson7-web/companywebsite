@@ -66,6 +66,12 @@ export async function Footer() {
             >
               {siteConfig.cta.primary.label}
             </Link>
+            <p className="mt-5 text-sm text-slate-300">
+              We&apos;re growing.{" "}
+              <Link href="/careers" className="font-semibold text-white underline-offset-4 hover:underline">
+                See open roles
+              </Link>
+            </p>
           </div>
         </div>
 

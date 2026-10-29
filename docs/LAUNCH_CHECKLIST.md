@@ -1,3 +1,5 @@
+> See also docs/OWNER_DECISIONS.md (open facts) and docs/FINAL_LAUNCH_AUDIT.md (current PASS/FAIL status).
+
 # Launch checklist
 
 Work through this before pointing a real domain at the site and enabling indexing.
@@ -16,15 +18,15 @@ Work through this before pointing a real domain at the site and enabling indexin
 - [ ] Technology lists reflect real experience (`src/content/home.ts`, `services.ts`).
 - [ ] Concept projects stay labeled as concepts; replace with case studies only with written client approval
       of every fact, name, logo, and metric.
-- [ ] Team profiles (`siteConfig.team`) and founder note (`siteConfig.founderNote`) added only with consent.
-- [ ] Open roles (`siteConfig.openRoles`) only if actively hiring.
+- [ ] Team portraits/profile links (`src/content/team.ts`) and leadership note (`siteConfig.leadershipNote`) added only with consent.
+- [ ] Job facts (location, type, pay) confirmed and pay-transparency reviewed before promoting roles (`src/content/jobs.ts`).
 - [ ] Article dates and content reviewed; add an author byline only for a real, consenting person.
 
 ## 2. Contact, email, and scheduling
 
 - [ ] Domain email set up (e.g. `hello@yourdomain.com`) with SPF, DKIM, and DMARC.
 - [ ] `NEXT_PUBLIC_CONTACT_EMAIL` (and optionally `NEXT_PUBLIC_CAREERS_EMAIL`) set.
-- [ ] Resend: domain verified; `RESEND_API_KEY`, `INQUIRY_TO_EMAIL`, `INQUIRY_FROM_EMAIL` set in production.
+- [ ] Resend: domain verified; `RESEND_API_KEY` and `EMAIL_FROM` set in production (recipients default to rpatdu@mentortech.space).
 - [ ] Send a real test inquiry from production and confirm it arrives, reply-to works, and it isn't in spam.
 - [ ] Confirm the "demo mode" notice disappears after configuring (it's evaluated at build time, so redeploy).
 - [ ] Upstash Redis configured for distributed rate limiting (required on serverless hosting).

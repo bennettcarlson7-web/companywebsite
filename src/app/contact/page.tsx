@@ -1,21 +1,20 @@
-import { Clock, Mail, MapPin, MessagesSquare } from "lucide-react";
-import { siteConfig } from "@/lib/site-config";
+import Link from "next/link";
+import { Briefcase, MapPin, MessagesSquare } from "lucide-react";
+import { emailSubjects, mailtoHref, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
-import { isInquiryDeliveryConfigured } from "@/lib/integrations/env";
 import { Container, Section } from "@/components/ui/primitives";
 import { PageHero } from "@/components/sections/page-hero";
 import { ScheduleButton } from "@/components/sections/cta-section";
-import { ContactForm } from "@/components/forms/contact-form";
+import { ProjectInquiryForm } from "@/components/forms/project-inquiry-form";
 
 export const metadata = buildMetadata({
   title: "Contact Us — Tell Us About Your Project",
-  description:
-    "Tell us about your idea or project. Share a few details and we'll reply with questions, thoughts, and a practical next step.",
+  description: "Tell us about your idea or project, and we'll reply with questions, thoughts, and a practical next step.",
   path: "/contact",
 });
 
 const nextSteps = [
-  { title: "We read every inquiry", body: "A real person reviews your message — not an autoresponder." },
+  { title: "We read every inquiry", body: "A person on our team reviews your message — not an autoresponder." },
   { title: "We reply with questions", body: "Usually a few clarifying questions and an offer of a short intro call." },
   { title: "You get a clear next step", body: "A proposal, a suggested discovery phase, or an honest referral if we're not the right fit." },
 ];
@@ -28,7 +27,15 @@ export default function ContactPage() {
         crumbs={[{ label: "Contact", href: "/contact" }]}
         eyebrow="Contact"
         title="Let's build something great together"
-        intro="Tell us what you're working on. The more context you share, the more useful our first reply will be — but a few sentences is plenty to start."
+        intro={
+          <>
+            <p>
+              Tell us what you&apos;re working on. The more context you share, the more useful our first reply will be —
+              but a few sentences is plenty to start.
+            </p>
+            <p className="mt-3 text-base">{responseTime}</p>
+          </>
+        }
       />
 
       <Section className="pt-10 sm:pt-12 lg:pt-14">
@@ -36,7 +43,7 @@ export default function ContactPage() {
           <div className="rounded-[1.75rem] bg-white p-6 shadow-card ring-1 ring-line sm:p-8 lg:col-span-8">
             <h2 className="text-2xl font-semibold tracking-tight">Project inquiry</h2>
             <p className="mt-2 mb-8 text-slate-600">No commitment required. We use your details only to respond to your inquiry — no mailing lists.</p>
-            <ContactForm deliveryConfigured={isInquiryDeliveryConfigured()} contactEmail={email} />
+            <ProjectInquiryForm contactEmail={email} />
           </div>
 
           <aside className="space-y-6 lg:col-span-4">
@@ -56,8 +63,13 @@ export default function ContactPage() {
                 </>
               ) : (
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Online booking isn&apos;t available yet. Mention in your message that you&apos;d like a call and suggest a
-                  few times — we&apos;ll confirm by email.
+                  <a
+                    href={mailtoHref(email, emailSubjects.callRequest, "Hi! I'd like to set up a short call about a project. A few times that work for me (with time zone):\n\n")}
+                    className="font-semibold text-cobalt-700 underline underline-offset-2"
+                  >
+                    Email us to request a call
+                  </a>{" "}
+                  with a few times that work for you, and we&apos;ll send a calendar invite.
                 </p>
               )}
             </div>
@@ -81,21 +93,19 @@ export default function ContactPage() {
 
             <ul className="space-y-3 rounded-2xl bg-white p-6 text-sm text-slate-700 ring-1 ring-line">
               <li className="flex gap-3">
-                <Clock aria-hidden="true" className="size-4 shrink-0 text-cobalt-600" />
-                {responseTime}
-              </li>
-              <li className="flex gap-3">
                 <MapPin aria-hidden="true" className="size-4 shrink-0 text-cobalt-600" />
                 {siteConfig.locationStatement}
               </li>
-              {email && (
-                <li className="flex gap-3">
-                  <Mail aria-hidden="true" className="size-4 shrink-0 text-cobalt-600" />
-                  <a href={`mailto:${email}`} className="font-medium text-cobalt-700 hover:underline">
-                    {email}
-                  </a>
-                </li>
-              )}
+              <li className="flex gap-3">
+                <Briefcase aria-hidden="true" className="size-4 shrink-0 text-cobalt-600" />
+                <span>
+                  Looking for a job? Use our{" "}
+                  <Link href="/careers/apply" className="font-semibold text-cobalt-700 underline underline-offset-2">
+                    careers application
+                  </Link>{" "}
+                  instead.
+                </span>
+              </li>
             </ul>
           </aside>
         </Container>

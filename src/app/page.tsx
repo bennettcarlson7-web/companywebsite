@@ -9,6 +9,7 @@ import {
   FounderStory,
   HomeHero,
   InsightsPreview,
+  RecruitingAnnouncement,
   WhatWeDo,
   WhyUs,
 } from "@/components/sections/home";
@@ -55,6 +56,7 @@ export default function HomePage() {
         </Container>
       </Section>
       <InsightsPreview />
+      <RecruitingAnnouncement />
       <CTASection />
     </>
   );

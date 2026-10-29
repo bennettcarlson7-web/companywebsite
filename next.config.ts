@@ -43,6 +43,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // Node-only SMTP client used by the intake API routes; load it from node_modules instead of bundling.
+  serverExternalPackages: ["nodemailer"],
   pageExtensions: ["ts", "tsx", "mdx"],
   turbopack: {
     rules: {

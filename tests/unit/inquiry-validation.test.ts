@@ -1,16 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { inquirySchema, LIMITS, toFieldErrors } from "@/lib/validation/inquiry";
+import { INQUIRY_LIMITS, inquiryFieldErrors, inquirySchema } from "@/lib/validation/project-inquiry";
 import { validInquiry } from "./fixtures";
 
 function errorsFor(input: unknown) {
   const result = inquirySchema.safeParse(input);
-  return result.success ? {} : toFieldErrors(result.error);
+  return result.success ? {} : inquiryFieldErrors(result.error);
 }
 
-describe("inquirySchema", () => {
+describe("inquirySchema (project inquiries)", () => {
   it("accepts a complete, valid inquiry", () => {
-    const result = inquirySchema.safeParse(validInquiry);
-    expect(result.success).toBe(true);
+    expect(inquirySchema.safeParse(validInquiry).success).toBe(true);
   });
 
   it("trims whitespace and collapses newlines in single-line fields", () => {
@@ -37,24 +36,18 @@ describe("inquirySchema", () => {
     expect(errors.email).toMatch(/valid email/i);
   });
 
-  it("rejects malformed emails", () => {
+  it("rejects malformed emails and unknown enum values", () => {
     expect(errorsFor({ ...validInquiry, email: "not-an-email" }).email).toBeDefined();
     expect(errorsFor({ ...validInquiry, email: "a@b" }).email).toBeDefined();
-  });
-
-  it("rejects unknown enum values", () => {
     expect(errorsFor({ ...validInquiry, projectType: "hack" }).projectType).toBeDefined();
     expect(errorsFor({ ...validInquiry, budget: "a-million" }).budget).toBeDefined();
   });
 
-  it("enforces description length limits", () => {
+  it("enforces length limits", () => {
     expect(errorsFor({ ...validInquiry, description: "too short" }).description).toMatch(/more detail/);
-    expect(errorsFor({ ...validInquiry, description: "x".repeat(LIMITS.descriptionMax + 1) }).description).toMatch(/under/);
-  });
-
-  it("enforces name and company length limits", () => {
-    expect(errorsFor({ ...validInquiry, name: "x".repeat(LIMITS.name + 1) }).name).toBeDefined();
-    expect(errorsFor({ ...validInquiry, company: "x".repeat(LIMITS.company + 1) }).company).toBeDefined();
+    expect(errorsFor({ ...validInquiry, description: "x".repeat(INQUIRY_LIMITS.descriptionMax + 1) }).description).toMatch(/under/);
+    expect(errorsFor({ ...validInquiry, name: "x".repeat(INQUIRY_LIMITS.name + 1) }).name).toBeDefined();
+    expect(errorsFor({ ...validInquiry, company: "x".repeat(INQUIRY_LIMITS.company + 1) }).company).toBeDefined();
   });
 
   it("requires explicit consent (true, not truthy strings)", () => {

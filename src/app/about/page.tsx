@@ -1,16 +1,18 @@
 import { siteConfig } from "@/lib/site-config";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, JsonLd, teamJsonLd } from "@/lib/seo";
+import { getTeam } from "@/content/team";
 import { ButtonLink } from "@/components/ui/button";
 import { IconTile } from "@/components/ui/icon";
 import { Container, Section, SectionHeader } from "@/components/ui/primitives";
 import { Reveal } from "@/components/ui/reveal";
 import { PageHero } from "@/components/sections/page-hero";
 import { CTASection } from "@/components/sections/cta-section";
+import { TeamCard } from "@/components/team/team-card";
 import type { IconName } from "@/types/content";
 
 export const metadata = buildMetadata({
-  title: "About Us — A Founder-Led Software Studio",
-  description: `${siteConfig.name} is a founder-led software development and IT consulting studio helping founders and businesses turn ideas into well-engineered products.`,
+  title: "About Us — The Team Behind Nextmade",
+  description: `Meet the ${siteConfig.name} team: CEO Antonio Ortiz, CTO Ricky Lee Sprouse, and senior software engineers Renz Patdu, Parbin Parajuli, and Joseph Zhang.`,
   path: "/about",
 });
 
@@ -22,32 +24,41 @@ const values: { title: string; body: string; icon: IconName }[] = [
 ];
 
 const engagementSteps = [
-  { title: "Intro conversation", body: "A free, no-pressure call to understand your idea or problem and see if we're a good fit." },
-  { title: "Discovery or proposal", body: "For clear projects, a written proposal. For fuzzier ones, a short paid discovery phase first." },
+  { title: "Intro conversation", body: "A short, no-pressure conversation to understand your idea or problem and whether we're a good fit." },
+  { title: "Discovery or proposal", body: "For clear projects, a written proposal. For fuzzier ones, a focused discovery phase first." },
   { title: "Agreement", body: "A written contract covering scope, milestones, payment terms, ownership, and confidentiality." },
   { title: "Build together", body: "Regular demos, written updates, and shared access to the work as it progresses." },
 ];
 
 export default function AboutPage() {
-  const { team, founderNote } = siteConfig;
+  const team = getTeam();
+  const leadership = team.filter((m) => m.group === "leadership");
+  const engineers = team.filter((m) => m.group === "engineering");
+  const { leadershipNote } = siteConfig;
+
   return (
     <>
       <PageHero
         crumbs={[{ label: "About", href: "/about" }]}
         eyebrow="About us"
         title="A technology partner for what's next"
-        intro={`${siteConfig.name} is a founder-led software studio. We help founders, startups, and growing businesses turn ideas into real, well-engineered digital products — and we're building the company we'd want to hire.`}
+        intro={`${siteConfig.name} is an early-stage software development and IT consulting company. We help founders and businesses turn ideas into real, working software — and you work directly with the people who build it.`}
         actions={
-          <ButtonLink href={siteConfig.cta.primary.href} size="lg" arrow>
-            {siteConfig.cta.primary.label}
-          </ButtonLink>
+          <>
+            <ButtonLink href={siteConfig.cta.primary.href} size="lg" arrow>
+              Discuss Your Project
+            </ButtonLink>
+            <ButtonLink href={siteConfig.cta.careers.href} size="lg" variant="secondary">
+              Explore Careers
+            </ButtonLink>
+          </>
         }
       />
 
       <Section labelledBy="mission-heading">
         <Container className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <SectionHeader id="mission-heading" eyebrow="Our mission" title="Make good software accessible to people with good ideas" />
+            <SectionHeader id="mission-heading" eyebrow="Our mission" title="Turn good ideas into real, working software" />
           </div>
           <div className="space-y-5 text-lg leading-relaxed text-slate-700 lg:col-span-7">
             <p>
@@ -59,17 +70,50 @@ export default function AboutPage() {
               We exist to change that. We pair product thinking with careful engineering, explain every decision in plain
               language, and focus each release on what will make the biggest difference.
             </p>
-            {founderNote && (
+            {leadershipNote && (
               <figure className="rounded-2xl bg-mist p-6 ring-1 ring-cobalt-100">
-                <blockquote className="text-navy-900">{founderNote.body}</blockquote>
-                <figcaption className="mt-3 text-sm text-slate-600">— {founderNote.signature}</figcaption>
+                <blockquote className="text-navy-900">{leadershipNote.body}</blockquote>
+                <figcaption className="mt-3 text-sm text-slate-600">— {leadershipNote.signature}</figcaption>
               </figure>
             )}
           </div>
         </Container>
       </Section>
 
-      <Section tone="mist" labelledBy="values-heading">
+      <Section tone="mist" labelledBy="team-heading">
+        <Container>
+          <SectionHeader
+            id="team-heading"
+            eyebrow="Leadership & engineering"
+            title="The people you'll work with"
+            description="We're a small, senior-led team, so you talk directly with the people making decisions about your product and the engineers building it."
+          />
+
+          <h3 className="mt-12 text-sm font-semibold tracking-wide text-slate-600 uppercase">Leadership</h3>
+          <Reveal>
+            <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:max-w-3xl">
+              {leadership.map((m) => (
+                <li key={m.name}>
+                  <TeamCard member={m} headingLevel="h3" />
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+
+          <h3 className="mt-10 text-sm font-semibold tracking-wide text-slate-600 uppercase">Engineering</h3>
+          <Reveal>
+            <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {engineers.map((m) => (
+                <li key={m.name}>
+                  <TeamCard member={m} headingLevel="h3" />
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </Container>
+      </Section>
+
+      <Section labelledBy="values-heading">
         <Container>
           <SectionHeader id="values-heading" eyebrow="Our values" title="What we hold ourselves to" />
           <Reveal>
@@ -86,43 +130,6 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      <Section labelledBy="founder-led-heading">
-        <Container className="grid gap-12 lg:grid-cols-2 lg:items-center">
-          <div>
-            <SectionHeader
-              id="founder-led-heading"
-              eyebrow="Founder-led"
-              title="You work directly with the people accountable for the work"
-              description="As an early-stage studio, we're deliberately small. That means senior attention on your project, short lines of communication, and no hand-offs to a team you've never met."
-            />
-            <p className="mt-5 leading-relaxed text-slate-600">
-              It also means we&apos;re selective about the projects we take on, so we can give each one the focus it
-              deserves. If we&apos;re not the right fit, we&apos;ll tell you — and point you in a better direction when
-              we can.
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white p-6 ring-1 ring-line shadow-soft sm:p-8">
-            <h2 className="text-lg font-semibold">The team</h2>
-            {team.length > 0 ? (
-              <ul className="mt-5 grid gap-5 sm:grid-cols-2">
-                {team.map((m) => (
-                  <li key={m.name}>
-                    <p className="font-semibold text-navy-900">{m.name}</p>
-                    <p className="text-sm text-cobalt-700">{m.role}</p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{m.bio}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-3 leading-relaxed text-slate-600">
-                Team profiles are coming soon. In the meantime, just ask — we&apos;re happy to tell you exactly who
-                you&apos;d be working with, their background, and their role on your project before you commit to anything.
-              </p>
-            )}
-          </div>
-        </Container>
-      </Section>
-
       <Section tone="mist" labelledBy="engagements-heading">
         <Container>
           <SectionHeader
@@ -134,7 +141,7 @@ export default function AboutPage() {
           <ol className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {engagementSteps.map((s, i) => (
               <li key={s.title} className="rounded-2xl bg-white p-6 ring-1 ring-line">
-                <span className="text-sm font-semibold text-cobalt-600">Step {i + 1}</span>
+                <span className="text-sm font-semibold text-cobalt-700">Step {i + 1}</span>
                 <h3 className="mt-2 font-semibold">{s.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{s.body}</p>
               </li>
@@ -144,6 +151,7 @@ export default function AboutPage() {
       </Section>
 
       <CTASection />
+      <JsonLd data={teamJsonLd(team)} />
     </>
   );
 }

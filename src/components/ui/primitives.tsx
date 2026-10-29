@@ -89,9 +89,9 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
 export function ConceptBadge() {
   return (
     <Badge tone="amber">
-      <span className="font-semibold">Concept</span>
-      <span aria-hidden="true" className="mx-1">·</span>
-      Illustrative project
+      <span className="font-semibold">Illustrative concept</span>
+      <span aria-hidden="true" className="mx-1">—</span>
+      not a client project
     </Badge>
   );
 }

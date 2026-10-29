@@ -74,18 +74,22 @@ export function HeroVisual() {
         <div className="absolute right-[5%] bottom-[5%] w-[30%] rounded-[1.4rem] bg-navy-900 p-1.5 shadow-float">
           <div className="rounded-[1.1rem] bg-white p-2.5">
             <span className="mx-auto block h-1 w-8 rounded-full bg-line" />
-            <div className="mt-2.5 flex items-center gap-1.5">
-              <span className="inline-flex size-5 items-center justify-center rounded-md bg-success-50 text-success-700">
+            {/* Generic product-mockup content — not a claim that anything was booked. */}
+            <span className="mt-2 block text-[0.45rem] font-semibold tracking-wider text-slate-500 uppercase sm:text-[0.5rem]">
+              Sample app screen
+            </span>
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <span className="inline-flex size-5 items-center justify-center rounded-md bg-cobalt-50 text-cobalt-600">
                 <CalendarCheck className="size-3" />
               </span>
-              <span className="text-[0.5rem] font-semibold text-navy-900 sm:text-[0.6rem]">Booking confirmed</span>
+              <span className="text-[0.5rem] font-semibold text-navy-900 sm:text-[0.6rem]">Your booking flow</span>
             </div>
             <div className="mt-2 space-y-1.5">
               <span className="block h-1.5 w-full rounded-full bg-line" />
               <span className="block h-1.5 w-4/5 rounded-full bg-line" />
             </div>
             <span className="mt-2.5 block rounded-md bg-cobalt-600 py-1 text-center text-[0.5rem] font-semibold text-white">
-              View details
+              Continue
             </span>
           </div>
         </div>

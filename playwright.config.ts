@@ -18,12 +18,21 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   // Runs against a production build. The inquiry endpoint is deliberately left
-  // unconfigured (no RESEND_API_KEY) so the tests exercise the safe "not configured" path.
+  // unconfigured (no SMTP or Resend credentials, even if .env.local has them) so the tests exercise the safe
+  // "not configured" path and never send real email.
   webServer: {
     command: `npm run start -- --port ${port} --hostname 127.0.0.1`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { RESEND_API_KEY: "", INQUIRY_TO_EMAIL: "", HUBSPOT_ACCESS_TOKEN: "", INQUIRY_RATE_LIMIT_MAX: "100" },
+    env: {
+      SMTP_HOST: "",
+      SMTP_USER: "",
+      SMTP_PASSWORD: "",
+      RESEND_API_KEY: "",
+      EMAIL_FROM: "",
+      HUBSPOT_ACCESS_TOKEN: "",
+      INTAKE_RATE_LIMIT_MAX: "200",
+    },
   },
 });

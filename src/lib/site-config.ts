@@ -1,10 +1,10 @@
 /**
  * Central, editable business configuration.
  *
- * Everything a non-developer is likely to change lives here or in `src/content/*`.
- * Values that must not be invented (contact details, scheduling, socials, legal entity)
- * default to `null` and are filled in through environment variables or by editing this file.
- * The UI checks for `null` and adapts instead of showing placeholder data as if it were real.
+ * `company` holds facts supplied by the business owner. Everything else a non-developer is likely to change
+ * lives here or in `src/content/*`. Values that must not be invented (scheduling, socials, legal entity)
+ * default to `null`; the UI checks for `null` and adapts instead of showing placeholder data as fact.
+ * Open owner questions are tracked in docs/OWNER_DECISIONS.md.
  */
 
 function optionalEnv(value: string | undefined): string | null {
@@ -23,17 +23,32 @@ function optionalUrl(value: string | undefined): string | null {
   }
 }
 
+/** Owner-supplied company facts (Oct 2026). */
+export const company = {
+  /** Current site brand. The legal company name is NOT yet confirmed (see docs/OWNER_DECISIONS.md). */
+  displayName: "Nextmade",
+  market: "United States",
+  /**
+   * Public business inbox. Note: its domain (mentortech.space) differs from the brand; the relationship
+   * between them is an open owner decision and is not stated anywhere on the site.
+   */
+  contactEmail: "rpatdu@mentortech.space",
+  valueProposition: "Your Idea. Our Engineering. Real Results.",
+  secondaryMessage: "You bring the idea. We help make it real.",
+  stage: "Early-stage software development and IT consulting company",
+} as const;
+
 export type NavItem = { label: string; href: string };
 
 export const siteConfig = {
-  /** Working brand name — rename here and everything follows. */
-  name: "Nextmade",
-  /** Legal entity name for footers and policies. `null` until the entity is formed/verified. */
+  /** Brand name used across the UI — rename `company.displayName` and everything follows. */
+  name: company.displayName,
+  /** Legal entity name for footers and policies. `null` until confirmed by the owner. */
   legalName: null as string | null,
-  tagline: "You bring the idea. We help make it real.",
+  tagline: company.secondaryMessage,
   description:
-    "Nextmade is a product-minded software development and IT consulting studio. We help founders, startups, and growing businesses turn ideas into well-engineered web apps, mobile apps, AI automations, and integrations.",
-  /** Shown in footer/contact. Verify before launch (see docs/LAUNCH_CHECKLIST.md). */
+    "Nextmade is an early-stage software development and IT consulting company. We help founders, startups, and growing businesses turn ideas into well-engineered web apps, mobile apps, AI automations, and integrations.",
+  /** Shown in footer/contact. Verify before launch (see docs/OWNER_DECISIONS.md). */
   locationStatement: "Remote-first, working with teams across the U.S.",
 
   /** Public base URL, e.g. https://www.example.com. Enables canonical URLs and sitemap hosts. */
@@ -42,14 +57,20 @@ export const siteConfig = {
   allowIndexing: process.env.NEXT_PUBLIC_ALLOW_INDEXING === "true",
 
   contact: {
-    /** Public inbox for project inquiries. */
-    email: optionalEnv(process.env.NEXT_PUBLIC_CONTACT_EMAIL),
-    /** Public inbox for job interest. Falls back to the contact email when unset. */
-    careersEmail: optionalEnv(process.env.NEXT_PUBLIC_CAREERS_EMAIL),
-    /** Real booking page (Cal.com, Calendly, HubSpot Meetings…). */
-    schedulingUrl: optionalUrl(process.env.NEXT_PUBLIC_SCHEDULING_URL),
-    /** Plain-language promise about response time. Keep it something you can actually meet. */
-    responseTime: "We aim to reply within two business days.",
+    /** Public inbox for project inquiries (owner-supplied). */
+    email: company.contactEmail as string,
+    /** Public inbox for job applications. Same inbox until the owner sets up a separate one. */
+    careersEmail: company.contactEmail as string,
+    /**
+     * Real booking page (Cal.com, Calendly, HubSpot Meetings…). Read at build time on the server only.
+     * `null` → visitors are invited to request a call by email instead.
+     */
+    schedulingUrl: optionalUrl(process.env.BOOKING_URL ?? process.env.NEXT_PUBLIC_SCHEDULING_URL),
+    /**
+     * Response-time wording. No turnaround is promised until the owner approves one
+     * (e.g. "We aim to reply within two business days.").
+     */
+    responseTime: "Every message is read by a person on our team, and we reply personally.",
   },
 
   social: {
@@ -62,6 +83,7 @@ export const siteConfig = {
     primary: { label: "Tell Us About Your Project", href: "/contact" },
     secondary: { label: "Explore Our Work", href: "/work" },
     header: { label: "Start a Project", href: "/contact" },
+    careers: { label: "Explore Open Roles", href: "/careers" },
     schedule: "Book a Discovery Call",
   },
 
@@ -76,27 +98,15 @@ export const siteConfig = {
   ] satisfies NavItem[],
 
   /**
-   * Real open roles only. Leave empty when nothing is open — the careers page then says so.
-   * Example: { title: "Senior Full-Stack Engineer", type: "Contract", location: "Remote (U.S.)", href: "https://…" }
+   * A short first-person note from leadership, in their own words. `null` → not shown.
+   * Never write this on someone's behalf.
    */
-  openRoles: [] as { title: string; type: string; location: string; href: string }[],
-
-  /**
-   * Real team members only (with their consent). Empty → the About page explains that
-   * profiles are coming and invites visitors to ask who they would work with.
-   */
-  team: [] as { name: string; role: string; bio: string }[],
-
-  /**
-   * The founder's own words. `null` → the About page shows the company-level story only.
-   * Replace with a short first-person note written by the founder.
-   */
-  founderNote: null as { body: string; signature: string } | null,
+  leadershipNote: null as { body: string; signature: string } | null,
 
   legal: {
     /** Policies are drafts until reviewed by qualified counsel. Flip to false after review. */
     policiesAreDrafts: true,
-    lastUpdated: "2026-10-29",
+    lastUpdated: "2026-10-28",
     /** Governing-law state for the Terms page, e.g. "Delaware". `null` → shown as a draft placeholder. */
     governingLaw: null as string | null,
   },
@@ -104,8 +114,8 @@ export const siteConfig = {
 
 export type SiteConfig = typeof siteConfig;
 
-export function getCareersEmail(): string | null {
-  return siteConfig.contact.careersEmail ?? siteConfig.contact.email;
+export function getCareersEmail(): string {
+  return siteConfig.contact.careersEmail;
 }
 
 /** Absolute URL for a path when the public base URL is configured, otherwise `null`. */
@@ -116,4 +126,22 @@ export function absoluteUrl(path = "/"): string | null {
 
 export function copyrightHolder(): string {
   return siteConfig.legalName ?? siteConfig.name;
+}
+
+/** Email subject lines, so both tracks are easy to filter in the shared inbox. */
+export const emailSubjects = {
+  inquiry: `Project inquiry — ${company.displayName}`,
+  application: (roleTitle: string) => `[${company.displayName} Careers] ${roleTitle} — Application`,
+  careersQuestion: `Careers question — ${company.displayName}`,
+  callRequest: `Call request — ${company.displayName}`,
+};
+
+/** `mailto:` link with an optional prefilled subject and body. */
+export function mailtoHref(to: string, subject?: string, body?: string): string {
+  const params = new URLSearchParams();
+  if (subject) params.set("subject", subject);
+  if (body) params.set("body", body);
+  // URLSearchParams encodes spaces as "+", which some mail clients show literally.
+  const query = params.toString().replace(/\+/g, "%20");
+  return `mailto:${to}${query ? `?${query}` : ""}`;
 }

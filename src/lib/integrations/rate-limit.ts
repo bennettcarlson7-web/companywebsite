@@ -1,4 +1,4 @@
-import type { InquiryEnv } from "./env";
+import type { IntakeEnv } from "./env";
 
 export type RateLimitResult = { allowed: boolean; retryAfterSeconds: number };
 
@@ -49,7 +49,7 @@ export class UpstashRateLimiter implements RateLimiter {
   ) {}
 
   async hit(key: string): Promise<RateLimitResult> {
-    const redisKey = `ratelimit:inquiry:${key}`;
+    const redisKey = `ratelimit:${key}`;
     const res = await fetch(`${this.url.replace(/\/$/, "")}/pipeline`, {
       method: "POST",
       headers: { Authorization: `Bearer ${this.token}`, "Content-Type": "application/json" },
@@ -71,7 +71,7 @@ export class UpstashRateLimiter implements RateLimiter {
 
 let memoryLimiter: MemoryRateLimiter | undefined;
 
-export function createRateLimiter(env: InquiryEnv): RateLimiter {
+export function createRateLimiter(env: IntakeEnv): RateLimiter {
   if (env.upstashUrl && env.upstashToken) {
     return new UpstashRateLimiter(env.upstashUrl, env.upstashToken, env.rateLimitMax, env.rateLimitWindowMs);
   }
