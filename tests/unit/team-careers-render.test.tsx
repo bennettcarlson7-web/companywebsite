@@ -48,7 +48,9 @@ describe("JobCard", () => {
       const card = within(screen.getByRole("article", { name: job.title }));
       expect(card.getByRole("link", { name: `View Role: ${job.title}` })).toHaveAttribute("href", `/careers/${job.slug}`);
       expect(card.getByRole("link", { name: `Apply for ${job.title}` })).toHaveAttribute("href", `/careers/apply?role=${job.slug}`);
-      expect(card.getByText(/shared during the hiring process/i)).toBeInTheDocument();
+      expect(
+        card.getByText("Remote — worldwide (outside the United States) · Full-time · USD 2,000 per month"),
+      ).toBeInTheDocument();
     }
     expect(screen.queryByText(/no open roles/i)).not.toBeInTheDocument();
   });

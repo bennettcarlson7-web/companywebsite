@@ -38,13 +38,24 @@ describe("owner-supplied facts", () => {
     ]);
   });
 
-  it("never fabricates job location, employment type, or compensation", () => {
+  it("shows exactly the owner-confirmed job terms, excluding the U.S.", () => {
     for (const job of getJobs()) {
-      expect(job.facts).toEqual({ location: null, workplace: null, employmentType: null, compensation: null });
+      expect(job.facts).toEqual({
+        location: "Remote — worldwide (outside the United States)",
+        workplace: "Remote",
+        employmentType: "Full-time",
+        compensation: "USD 2,000 per month",
+      });
       expect(job.posting.eligible).toBe(false);
       expect(jobPostingJsonLd(job)).toBeNull();
     }
     expect(UNCONFIRMED_DETAIL).toBe("Shared during the hiring process");
+  });
+
+  it("uses the confirmed legal name and an active (non-draft) Privacy Policy", () => {
+    expect(company.legalName).toBe("NextMade");
+    expect(siteConfig.name).toBe("NextMade");
+    expect(siteConfig.legal.privacy.draft).toBe(false);
   });
 
   it("uses the company domain and the owner-chosen client and hiring inboxes", () => {
@@ -62,7 +73,8 @@ describe("content integrity", () => {
       expect(a.publishedAt <= today, `${a.slug} is dated ${a.publishedAt}, after ${today}`).toBe(true);
       if (a.updatedAt) expect(a.updatedAt <= today).toBe(true);
     }
-    expect(siteConfig.legal.lastUpdated <= today).toBe(true);
+    expect(siteConfig.legal.privacy.lastUpdated <= today).toBe(true);
+    expect(siteConfig.legal.terms.lastUpdated <= today).toBe(true);
   });
 
   it("computes the U.S. Pacific date across the date line", () => {

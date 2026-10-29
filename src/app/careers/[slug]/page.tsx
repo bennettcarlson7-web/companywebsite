@@ -115,7 +115,7 @@ export default async function JobPage({ params }: PageProps<"/careers/[slug]">) 
 
             <p className="rounded-xl bg-paper p-4 text-sm leading-relaxed text-slate-600 ring-1 ring-line">
               This description reflects our current thinking about the role and may be refined as we talk with
-              candidates. Location, employment type, and compensation will be confirmed with you during the hiring process
+              candidates. This role is open to candidates outside the United States. All terms are confirmed in writing
               before any offer.
             </p>
           </article>

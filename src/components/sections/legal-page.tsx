@@ -4,8 +4,18 @@ import { formatArticleDate } from "@/content/insights/format";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Container, Notice } from "@/components/ui/primitives";
 
-export function LegalPage({ title, path, children }: { title: string; path: string; children: ReactNode }) {
-  const { policiesAreDrafts, lastUpdated } = siteConfig.legal;
+export function LegalPage({
+  title,
+  path,
+  policy,
+  children,
+}: {
+  title: string;
+  path: string;
+  policy: keyof Pick<typeof siteConfig.legal, "privacy" | "terms">;
+  children: ReactNode;
+}) {
+  const { draft: policiesAreDrafts, lastUpdated } = siteConfig.legal[policy];
   return (
     <Container className="py-12 sm:py-16">
       <div className="mx-auto max-w-3xl">

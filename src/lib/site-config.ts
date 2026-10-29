@@ -25,8 +25,9 @@ function optionalUrl(value: string | undefined): string | null {
 
 /** Owner-supplied company facts (Oct 2026). */
 export const company = {
-  /** Current site brand. The legal company name is NOT yet confirmed (see docs/OWNER_DECISIONS.md). */
-  displayName: "Nextmade",
+  /** Site brand, matching the legal company name (owner-confirmed Oct 29, 2026). */
+  displayName: "NextMade",
+  legalName: "NextMade",
   market: "United States",
   /** Company domain (owner-supplied). DNS on Cloudflare; inbound mail via Cloudflare Email Routing. */
   domain: "nextmadelabs.com",
@@ -46,11 +47,11 @@ export type NavItem = { label: string; href: string };
 export const siteConfig = {
   /** Brand name used across the UI — rename `company.displayName` and everything follows. */
   name: company.displayName,
-  /** Legal entity name for footers and policies. `null` until confirmed by the owner. */
-  legalName: null as string | null,
+  /** Legal entity name for footers, policies, and structured data. */
+  legalName: company.legalName as string | null,
   tagline: company.secondaryMessage,
   description:
-    "Nextmade is an early-stage software development and IT consulting company. We help founders, startups, and growing businesses turn ideas into well-engineered web apps, mobile apps, AI automations, and integrations.",
+    "NextMade is an early-stage software development and IT consulting company. We help founders, startups, and growing businesses turn ideas into well-engineered web apps, mobile apps, AI automations, and integrations.",
   /** Shown in footer/contact. Verify before launch (see docs/OWNER_DECISIONS.md). */
   locationStatement: "Remote-first, working with teams across the U.S.",
 
@@ -110,9 +111,10 @@ export const siteConfig = {
   leadershipNote: null as { body: string; signature: string } | null,
 
   legal: {
-    /** Policies are drafts until reviewed by qualified counsel. Flip to false after review. */
-    policiesAreDrafts: true,
-    lastUpdated: "2026-10-28",
+    /** Privacy Policy is in effect (owner-approved Oct 29, 2026, with retention periods). */
+    privacy: { draft: false, lastUpdated: "2026-10-29" },
+    /** Terms stay a draft until the governing-law state is chosen and counsel has reviewed them. */
+    terms: { draft: true, lastUpdated: "2026-10-28" },
     /** Governing-law state for the Terms page, e.g. "Delaware". `null` → shown as a draft placeholder. */
     governingLaw: null as string | null,
   },

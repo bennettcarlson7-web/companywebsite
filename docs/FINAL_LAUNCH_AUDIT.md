@@ -16,15 +16,14 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
    to `hello@` / `careers@nextmadelabs.com`, which Cloudflare Email Routing forwards. No provider key was available here,
    and the Resend DNS records don't exist yet, so no real message has been delivered. Until then, both forms fall back to
    "we couldn't send it from the website — email us". *Owner:* follow `docs/EMAIL_SETUP.md`, then test both forms.
-2. **Job postings lack legally required facts.** Location, employment type, and especially **pay ranges**
-   (required in CO, CA, WA, NY, IL, and other jurisdictions for roles that can be filled there, including remote)
-   are unknown. Don't promote the roles on job boards or social media until counsel confirms what each posting
-   must include.
-3. **Legal entity name unconfirmed.** The domain is now settled (`nextmadelabs.com`), but the legal entity name and
-   address for the policies and footer are not (`docs/OWNER_DECISIONS.md` #1, #5).
-4. **Privacy Policy and Terms are drafts.** Retention periods, provider list, governing law, and entity/address are
-   bracketed. Collecting candidate data needs a defined retention period, restricted inbox access, and a
-   deletion process first.
+2. **How international hires are engaged is undefined.** Job terms are now shown: remote worldwide outside the U.S.,
+   full-time, USD 2,000/month. "Full-time" abroad usually needs a local entity or an employer-of-record service,
+   otherwise it's a contractor relationship with misclassification risk. Decide this before making offers. The U.S. is
+   excluded because this pay is below several state minimum wages and the federal overtime-exempt salary threshold.
+3. **Cloudflare routes not yet confirmed.** `hello@` / `careers@` must forward to the team Gmail inbox (owner-provided
+   destination). Until they do, mail to those addresses, and the site's notifications, will bounce.
+4. **Terms of Use are still a draft** (no governing-law state). The **Privacy Policy is now active**, with retention
+   periods, providers, transfers, and rights. Counsel review is still recommended for EU/UK candidates.
 5. **Rate limiting isn't distributed on Vercel.** Without Upstash, limits are per serverless instance. Configure
    `UPSTASH_REDIS_REST_URL`/`TOKEN` before enabling delivery.
 

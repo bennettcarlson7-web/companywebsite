@@ -67,7 +67,7 @@ export function HeroVisual() {
         </div>
         <div className="absolute top-[30%] right-[22%] flex items-start gap-1">
           <MousePointer2 className="size-4 fill-cobalt-600 text-cobalt-600" />
-          <span className="mt-3 rounded-md bg-cobalt-600 px-1.5 py-0.5 text-[0.6rem] font-semibold text-white">Nextmade</span>
+          <span className="mt-3 rounded-md bg-cobalt-600 px-1.5 py-0.5 text-[0.6rem] font-semibold text-white">NextMade</span>
         </div>
 
         {/* Phone */}

@@ -9,7 +9,7 @@ Last reviewed: Oct 28, 2026 (U.S. time).
 
 | # | Decision | Current default | Where to change |
 | --- | --- | --- | --- |
-| 1 | **Legal company name.** "Nextmade" is the site brand; the legal entity isn't confirmed. | Footer shows "© Nextmade". Policies say "Nextmade". | `siteConfig.legalName` in `src/lib/site-config.ts` |
+| 1 | ~~**Legal company name.**~~ **Resolved (owner, Oct 29, 2026):** "NextMade", used as both the brand and the legal name. | Footer "© NextMade"; policies and structured data say "NextMade". | `company.legalName` in `src/lib/site-config.ts` |
 | 2 | ~~**Company domain and inboxes.**~~ **Resolved (owner, Oct 29, 2026):** domain `nextmadelabs.com`. Clients use `hello@nextmadelabs.com` and candidates use `careers@nextmadelabs.com`. The address appears only in the footer and in email links, not in page content. | Canonical URL `https://nextmadelabs.com`. | `company` in `src/lib/site-config.ts` |
 | 3 | **Email provider setup** (docs/EMAIL_SETUP.md): Cloudflare routes for `hello@` / `careers@`, Resend domain verification, DMARC, a "send as hello@" mailbox for replies, and `RESEND_API_KEY` in Vercel. Also: should the existing Zoho Mail setup replace Cloudflare routing? | Forms fall back to "email us" until a provider is configured. Confirmation emails are off. | Cloudflare DNS; Resend; `.env.local` / Vercel env vars |
 | 4 | **Logo and brand mark.** The "N" mark is a placeholder created for this site. | Placeholder mark in use. | `src/components/ui/logo.tsx`, `src/app/icon.svg` |
@@ -26,18 +26,18 @@ Last reviewed: Oct 28, 2026 (U.S. time).
 | 10 | **Founders.** Are any team members founders? The site no longer says "founder-led" because this wasn't confirmed. | "Senior-led team". |
 | 11 | **Leadership note** in a leader's own words. | Not shown (`siteConfig.leadershipNote = null`). |
 
-## Hiring (blocks advertising the roles publicly)
+## Hiring
 
 | # | Decision | Current default |
 | --- | --- | --- |
-| 12 | **Location / workplace** for each role (remote U.S.? specific states? hybrid?). | "Shared during the hiring process". |
-| 13 | **Employment type** (full-time employee, contractor, part-time). | Same. |
-| 14 | **Compensation range.** Colorado, California, Washington, New York, Illinois, and other jurisdictions require pay ranges in postings for roles that could be filled there, including remote roles. **Get legal advice before promoting these roles** (job boards, social posts, Google for Jobs). | Not shown. `JobPosting` structured data is disabled. |
+| 12 | ~~**Location / workplace.**~~ **Resolved (owner, Oct 29, 2026):** remote, worldwide **outside the United States**. The U.S. is excluded because USD 2,000/month full-time (~$24k/yr) is below California, New York and other state minimum wages and the federal overtime-exempt salary threshold. | Shown on cards, job pages, and the FAQ. |
+| 13 | ~~**Employment type.**~~ **Resolved:** full-time. **Still open:** *how* each hire is engaged in their country (local entity, employer-of-record service, or independent contractor). "Full-time employee" abroad usually needs an EOR or local entity; misclassifying contractors carries local legal risk. | Not stated beyond "Full-time". |
+| 14 | ~~**Compensation.**~~ **Resolved:** USD 2,000 per month, all three roles. Consider whether this is competitive for *senior* engineers in your target countries. `JobPosting` structured data stays off (Google can't express "worldwide except the U.S." cleanly, and indexing is off). | Shown as "USD 2,000 per month". |
 | 15 | **Work authorization / visa sponsorship** policy. | Not mentioned. |
 | 16 | **Hiring process** steps and timeline. | Not described (only "a person reads every application"). |
 | 17 | **Equal opportunity statement**, and any accommodation-request contact. | Not shown. Add only wording approved by counsel. |
 | 18 | **Job descriptions.** Responsibilities and qualifications are proposed drafts for owner review. | Shown with a note that the description "may be refined". |
-| 19 | **Applicant data handling**: who can access the hiring inbox, retention period, and the deletion process. Must be in place before collecting applications. | Privacy draft describes intent; specific periods are bracketed. |
+| 19 | **Applicant data handling.** Retention resolved: applications are kept up to 12 months after the role closes, and inquiries up to 24 months after last contact. **Still open:** who can read careers@ mail in the shared Gmail, and a calendar reminder to delete expired applications. | In the Privacy Policy. |
 
 ## Customer intake
 
@@ -53,8 +53,8 @@ Last reviewed: Oct 28, 2026 (U.S. time).
 
 | # | Decision | Current default |
 | --- | --- | --- |
-| 25 | Privacy Policy and Terms reviewed by counsel; governing-law state; retention periods; final provider list. | Marked **Draft** with bracketed placeholders. |
+| 25 | **Privacy Policy: active** (owner, Oct 29, 2026). It lists the providers (Vercel, Cloudflare, Resend, Google), retention periods, international transfers, and privacy rights. Legal review is still recommended, especially for EU/UK candidates. **Terms of Use:** still a **Draft**, pending the governing-law state and counsel review. | Privacy final; Terms marked Draft. |
 | 26 | **Publication date policy.** Dates use the U.S. Pacific calendar date of actual publication; no future dates. Enforced by `tests/unit/content-integrity.test.ts`. | Articles dated Oct 28, 2026. |
 | 27 | **Analytics** (tool, consent banner). | None loaded. Forms emit privacy-safe `nextmade:analytics` DOM events only. |
-| 28 | **Real case studies.** Portfolio entries stay "Illustrative concept — not a client project" until replaced with client-approved work. | 3 concepts. |
+| 28 | **Real case studies.** Portfolio entries stay "Illustrative concept — not a client project" until replaced with client-approved work. | 5 concepts. |
 | 29 | **Official social profiles.** | None shown. |

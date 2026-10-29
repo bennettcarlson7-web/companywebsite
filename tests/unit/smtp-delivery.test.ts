@@ -43,7 +43,7 @@ describe("SMTP fallback configuration", () => {
       user: "rpatdu@mentortech.space",
       password: "app password with spaces ",
     });
-    expect(smtpEnv.emailFrom).toBe("Nextmade Website <rpatdu@mentortech.space>");
+    expect(smtpEnv.emailFrom).toBe("NextMade Website <rpatdu@mentortech.space>");
     expect(readIntakeEnv({ SMTP_HOST: "h", SMTP_USER: "u" }).smtp).toBeUndefined();
   });
 });
@@ -56,10 +56,10 @@ describe("delivery over SMTP", () => {
     expect(send).toHaveBeenCalledTimes(1); // confirmations are off by default
     expect(send).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: "Nextmade Website <rpatdu@mentortech.space>",
+        from: "NextMade Website <rpatdu@mentortech.space>",
         to: "hello@nextmadelabs.com",
         replyTo: "jordan@example.com",
-        subject: "[Nextmade Inquiry] New product / MVP — Jordan Rivera",
+        subject: "[NextMade Inquiry] New product / MVP — Jordan Rivera",
       }),
     );
   });
@@ -69,7 +69,7 @@ describe("delivery over SMTP", () => {
     const res = await handleApplication(req(validApplication), deps(smtpEnv, send));
     expect(res.body).toEqual({ status: "sent" });
     expect(send.mock.calls[0]![0].to).toBe("careers@nextmadelabs.com");
-    expect(send.mock.calls[0]![0].subject).toBe("[Nextmade Careers] Senior Software Engineer — Data Engineering — Application");
+    expect(send.mock.calls[0]![0].subject).toBe("[NextMade Careers] Senior Software Engineer — Data Engineering — Application");
     expect(send.mock.calls[0]![0].replyTo).toBe("sam@example.com");
   });
 
@@ -95,7 +95,7 @@ describe("provider order", () => {
     const res = await handleInquiry(req(validInquiry), deps(env, send, fetchImpl as unknown as typeof fetch));
     expect(res.body).toEqual({ status: "sent" });
     expect(send).not.toHaveBeenCalled();
-    expect(resendBodies(fetchImpl)[0].from).toBe("Nextmade <notifications@nextmadelabs.com>");
+    expect(resendBodies(fetchImpl)[0].from).toBe("NextMade <notifications@nextmadelabs.com>");
   });
 });
 
@@ -111,8 +111,8 @@ describe("confirmation emails", () => {
     expect(notification.to).toEqual(["hello@nextmadelabs.com"]);
     expect(confirmation.to).toEqual(["jordan@example.com"]);
     expect(confirmation.reply_to).toBe("hello@nextmadelabs.com");
-    expect(confirmation.from).toBe("Nextmade <notifications@nextmadelabs.com>");
-    expect(confirmation.subject).toBe("We received your project inquiry — Nextmade");
+    expect(confirmation.from).toBe("NextMade <notifications@nextmadelabs.com>");
+    expect(confirmation.subject).toBe("We received your project inquiry — NextMade");
     expect(confirmation.text).toContain("Hi Jordan,");
     expect(confirmation.text).not.toContain(validInquiry.description);
     expect(confirmation.html).not.toContain(validInquiry.description);
@@ -125,7 +125,7 @@ describe("confirmation emails", () => {
     const confirmation = resendBodies(fetchImpl)[1];
     expect(confirmation.to).toEqual(["sam@example.com"]);
     expect(confirmation.reply_to).toBe("careers@nextmadelabs.com");
-    expect(confirmation.subject).toBe("We received your application: Senior Software Engineer — Data Engineering — Nextmade");
+    expect(confirmation.subject).toBe("We received your application: Senior Software Engineer — Data Engineering — NextMade");
     expect(confirmation.text).not.toContain(validApplication.introduction);
   });
 

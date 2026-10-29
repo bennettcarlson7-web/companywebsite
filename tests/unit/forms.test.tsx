@@ -151,7 +151,7 @@ describe("CandidateApplicationForm", () => {
     expect(await screen.findByRole("heading", { name: /couldn.t send your application/i })).toBeInTheDocument();
     expect(screen.queryByText(/we received your application/i)).not.toBeInTheDocument();
     const href = decodeURIComponent(screen.getByRole("link", { name: /send by email/i }).getAttribute("href")!);
-    expect(href).toContain("mailto:careers@nextmadelabs.com?subject=[Nextmade Careers] Talent Recruiter — Application");
+    expect(href).toContain("mailto:careers@nextmadelabs.com?subject=[NextMade Careers] Talent Recruiter — Application");
   });
 
   it("shows a provider failure as not sent", async () => {

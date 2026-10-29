@@ -13,7 +13,7 @@ export default function TermsPage() {
   const holder = copyrightHolder();
   const law = siteConfig.legal.governingLaw;
   return (
-    <LegalPage title="Terms of Use" path="/terms">
+    <LegalPage title="Terms of Use" path="/terms" policy="terms">
       <p>
         These terms govern your use of this website, operated by {holder}. By using the site, you agree to these terms.
         They cover the website only; any client engagement is governed by a separate written agreement.
@@ -55,8 +55,8 @@ export default function TermsPage() {
       <p>
         Role descriptions on our careers pages describe the work as we currently see it and may change. Listing a role
         or submitting an application does not create an offer, an employment or contractor relationship, or any
-        obligation to interview or hire. Terms such as location, employment type, and compensation are confirmed in
-        writing during the hiring process.
+        obligation to interview or hire. Role terms shown on the site (location, employment type, and pay) are a summary;
+        the binding terms are those confirmed in writing before an offer.
       </p>
 
       <h2>Third-party links</h2>

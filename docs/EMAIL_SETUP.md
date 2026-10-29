@@ -36,11 +36,18 @@ sender) and the team needs a way to reply as `hello@` (step 4).
 
 ## Owner steps
 
-### 1. Create the routes (Cloudflare → nextmadelabs.com → Email → Email Routing → Routing rules)
-- `hello@nextmadelabs.com` → your team mailbox.
-- `careers@nextmadelabs.com` → the mailbox of whoever handles hiring. Keep it restricted: candidate data.
-- `notifications@nextmadelabs.com` → your team mailbox, or drop. Bounces and auto-replies may arrive here.
-- Make sure each destination address shows **Verified**.
+### 1. Create the routes (Cloudflare → nextmadelabs.com → Email → Email Routing)
+The owner chose one Gmail inbox as the destination for both addresses (Oct 29, 2026). The address is deliberately not
+written in this repository; it's entered only in Cloudflare.
+1. **Destination addresses → Add destination** → enter the team Gmail address. Open the verification email Cloudflare
+   sends to that inbox and click the link, so the destination shows **Verified**.
+2. **Routing rules → Create address**:
+   - `hello@nextmadelabs.com` → *Send to an email* → the Gmail destination.
+   - `careers@nextmadelabs.com` → the same destination. It holds candidate data, so only the hiring team should read that inbox.
+   - `notifications@nextmadelabs.com` → the same destination, or *Drop*. Bounces and auto-replies may arrive here.
+3. Make sure Email Routing status shows **Enabled**, and that the MX/SPF records Cloudflare manages are present (they are today).
+4. In Gmail, make a filter for each address (*To:* `hello@nextmadelabs.com` → label "Clients"; *To:*
+   `careers@nextmadelabs.com` → label "Careers") so the two tracks stay separate.
 - Test: from a personal email, write to `hello@` and `careers@` and confirm both arrive.
 
 ### 2. Verify the domain for sending (Resend)

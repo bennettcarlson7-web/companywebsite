@@ -3,8 +3,8 @@ import { buildMetadata } from "@/lib/seo";
 import { LegalPage } from "@/components/sections/legal-page";
 
 export const metadata = buildMetadata({
-  title: "Privacy Policy (Draft)",
-  description: `Draft privacy policy describing what information the ${siteConfig.name} website collects through project inquiries and job applications, and how it is used.`,
+  title: "Privacy Policy",
+  description: `How ${siteConfig.name} collects, uses, keeps, and protects information from project inquiries, job applications, and emails, and the choices you have.`,
   path: "/privacy",
 });
 
@@ -17,10 +17,11 @@ export default function PrivacyPage() {
     </a>
   );
   return (
-    <LegalPage title="Privacy Policy" path="/privacy">
+    <LegalPage title="Privacy Policy" path="/privacy" policy="privacy">
       <p>
-        This policy explains what information {holder} (&ldquo;we,&rdquo; &ldquo;us&rdquo;) collects through this website,
-        how we use it, and the choices you have. We aim to collect as little as possible.
+        This policy explains what information {holder} (&ldquo;we,&rdquo; &ldquo;us&rdquo;) collects through this website
+        and by email, how we use it, how long we keep it, and the choices you have. We aim to collect as little as
+        possible. {holder} is responsible for the information described here.
       </p>
 
       <h2>Information we collect</h2>
@@ -44,66 +45,101 @@ export default function PrivacyPage() {
         addresses temporarily to limit abusive form submissions.
       </p>
       <p>
-        <strong>Cookies and analytics.</strong> This website does not currently use advertising cookies, analytics, or
-        third-party tracking scripts. If that changes, we will update this policy and ask for consent where required.
+        <strong>Cookies and analytics.</strong> This website does not use advertising cookies, analytics, or
+        third-party tracking scripts. If that changes, we will update this policy first and ask for consent where
+        required.
       </p>
 
-      <h2>How we use information</h2>
+      <h2>How we use information, and why</h2>
       <ul>
-        <li>To respond to project inquiries and discuss potential work.</li>
-        <li>To review job applications, contact candidates, and run our hiring process.</li>
-        <li>To operate, maintain, and secure the website, including preventing spam and abuse.</li>
+        <li>
+          To respond to project inquiries and discuss potential work — because you asked us to, and to take steps before
+          entering into a contract with you.
+        </li>
+        <li>
+          To review job applications, contact candidates, and run our hiring process — to take steps at your request
+          before a possible employment contract, and in our legitimate interest in hiring.
+        </li>
+        <li>
+          To send a short confirmation that we received your inquiry or application, when that feature is enabled.
+        </li>
+        <li>
+          To operate, maintain, and secure the website, including preventing spam and abuse — in our legitimate interest
+          in keeping the site safe.
+        </li>
         <li>To comply with legal obligations.</li>
       </ul>
       <p>
         Project inquiries and job applications are handled separately. Application information is used only for hiring
-        and is shared only with the people involved in it. We do not sell personal information, and we do not use it
-        for targeted advertising.
+        and is shared only with the people involved in it. We do not sell or share personal information for
+        cross-context behavioral advertising, and we do not use it for automated decisions about you.
       </p>
 
       <h2>Service providers</h2>
+      <p>We use these providers to run the site and handle messages. They process information on our behalf, only as needed to provide their services:</p>
+      <ul>
+        <li>Vercel — website hosting.</li>
+        <li>Cloudflare — domain name services and routing of email sent to our addresses.</li>
+        <li>Resend — sending form submissions to our team and confirmations back to you.</li>
+        <li>Google (Gmail) — the mailbox where our team reads and answers email.</li>
+      </ul>
+      <p>We will update this list before adding a provider that receives personal information.</p>
+
+      <h2>International transfers</h2>
       <p>
-        We use providers to run the site and deliver form submissions to our team: website hosting, Cloudflare for
-        domain and email routing, and an email delivery service (such as Resend) to send your submission to our team
-        and, if enabled, a short confirmation back to you. For project inquiries only, we may also use HubSpot as a customer relationship
-        management (CRM) tool; job applications are never sent to the CRM. Providers process information on our behalf
-        and only as needed to provide their services. [Confirm the final list of providers before launch.]
+        We work with clients and candidates in many countries, and our providers process information in the United
+        States and other countries. Where the law of your country requires it, we rely on appropriate safeguards for these
+        transfers, such as the standard contractual clauses our providers offer.
       </p>
 
       <h2>How long we keep information</h2>
-      <p>
-        We keep inquiry information for as long as needed to respond and manage any resulting relationship, and
-        application information for as long as needed to complete the hiring process for the role, and then delete or
-        anonymize it unless you ask us to keep it for future opportunities or the law requires otherwise. [Confirm
-        specific retention periods for inquiries and applications before launch.]
-      </p>
+      <ul>
+        <li>
+          <strong>Project inquiries:</strong> up to 24 months after our last contact with you. If you become a client,
+          we keep project records for as long as our agreement with you and the law require.
+        </li>
+        <li>
+          <strong>Job applications:</strong> up to 12 months after the role you applied for is filled or closed. If you
+          agree, we may keep your application longer to consider you for future roles; you can withdraw that agreement at
+          any time.
+        </li>
+        <li>
+          <strong>Technical data:</strong> rate-limiting records are kept for minutes; hosting logs follow our hosting
+          provider&apos;s standard retention.
+        </li>
+      </ul>
+      <p>After these periods, we delete or anonymize the information unless the law requires us to keep it.</p>
 
       <h2>Your choices and rights</h2>
       <p>
-        You can ask us to access, correct, or delete the personal information you have shared with us — including
-        withdrawing a job application at any time. Depending on where you live, you may have additional rights under
-        applicable privacy laws. To make a request, email {mail(`Privacy request — ${siteConfig.name}`)} and tell us
-        whether it relates to an inquiry or an application. We will not discriminate against you for exercising your
-        rights.
+        You can ask us to access, correct, delete, or export the personal information you have shared with us, to
+        restrict or object to how we use it, or to withdraw a job application at any time. Depending on where you live
+        — for example, in the European Economic Area, the United Kingdom, or California — you may have these rights
+        under local privacy law, and you can also complain to your local data protection authority. To make a request,
+        email {mail(`Privacy request — ${siteConfig.name}`)} and tell us whether it relates to an inquiry or an
+        application. We will respond within the time the law requires, and we will not discriminate against you for
+        exercising your rights.
       </p>
 
       <h2>Security</h2>
       <p>
-        We use reasonable safeguards — including encrypted connections (HTTPS), restricted access, and input validation
-        — to protect information. No method of transmission or storage is completely secure, so please don&apos;t send
-        passwords, government ID numbers, or other highly sensitive personal data through our forms.
+        We use reasonable safeguards — including encrypted connections (HTTPS), restricted access to our inboxes, and
+        input validation — to protect information. No method of transmission or storage is completely secure, so please
+        don&apos;t send passwords, government ID numbers, or other highly sensitive personal data through our forms.
       </p>
 
       <h2>Children</h2>
-      <p>This website is intended for businesses and job seekers aged 18 and over. We do not knowingly collect information from children under 13.</p>
+      <p>This website is intended for businesses and job seekers aged 18 and over. We do not knowingly collect information from anyone under 18.</p>
 
       <h2>Changes to this policy</h2>
-      <p>We may update this policy from time to time. We&apos;ll change the &ldquo;Last updated&rdquo; date above when we do.</p>
+      <p>
+        We may update this policy from time to time. We&apos;ll change the &ldquo;Last updated&rdquo; date above, and for
+        significant changes we&apos;ll add a notice on this page.
+      </p>
 
       <h2>Contact</h2>
       <p>
-        Questions about this policy? Email {mail(`Privacy question — ${siteConfig.name}`)}. [Add the legal entity name
-        and a postal address if required for your jurisdiction.]
+        Questions about this policy or your information? Email {mail(`Privacy question — ${siteConfig.name}`)}.
       </p>
     </LegalPage>
   );

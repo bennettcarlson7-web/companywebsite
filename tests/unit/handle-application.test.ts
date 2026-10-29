@@ -8,7 +8,7 @@ import { sampleUuid, validApplication, validInquiry } from "./fixtures";
 
 const configured = readIntakeEnv({
   RESEND_API_KEY: "re_test",
-  EMAIL_FROM: "Nextmade Careers <careers@verified.example>",
+  EMAIL_FROM: "NextMade Careers <careers@verified.example>",
   HIRING_EMAIL: "hiring@example.com",
 });
 
@@ -34,9 +34,9 @@ describe("handleApplication", () => {
     expect(res.body).toEqual({ status: "sent" });
     const payload = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
     expect(payload.to).toEqual(["hiring@example.com"]);
-    expect(payload.from).toBe("Nextmade Careers <careers@verified.example>");
+    expect(payload.from).toBe("NextMade Careers <careers@verified.example>");
     expect(payload.reply_to).toBe("sam@example.com");
-    expect(payload.subject).toBe("[Nextmade Careers] Senior Software Engineer — Data Engineering — Application");
+    expect(payload.subject).toBe("[NextMade Careers] Senior Software Engineer — Data Engineering — Application");
   });
 
   it("defaults the hiring inbox to careers@nextmadelabs.com, separate from client inquiries", async () => {

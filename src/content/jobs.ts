@@ -3,13 +3,13 @@ import type { FAQ } from "@/types/content";
 /**
  * Roles the business owner confirmed we are recruiting for (Oct 2026).
  *
- * CONFIRMED: the three titles and that recruiting is active.
+ * CONFIRMED: the three titles, that recruiting is active, and (Oct 29, 2026) the terms in `confirmedFacts`:
+ * remote worldwide outside the United States, full-time, USD 2,000 per month. The U.S. is excluded on purpose:
+ * this pay is below several U.S. state minimum wages and the federal overtime-exempt salary threshold.
  * PROPOSED (owner review): summaries, responsibilities, signals, and skill tags. These are editorial job
  * descriptions, not statements about current employees.
- * UNKNOWN: location, workplace arrangement, employment type, compensation, work authorization, and the
- * hiring process. These stay `null` and render as "Shared during the hiring process". Before advertising
- * publicly, confirm them and check pay-transparency laws in every jurisdiction where the role could be filled
- * (see docs/OWNER_DECISIONS.md).
+ * UNKNOWN: work authorization, how workers in each country are engaged (local entity, employer of record, or
+ * contractor), and the hiring process. Never invent these.
  */
 export type Job = {
   slug: string;
@@ -43,7 +43,13 @@ export type Job = {
   };
 };
 
-const unconfirmedFacts: Job["facts"] = { location: null, workplace: null, employmentType: null, compensation: null };
+/** Owner-confirmed terms (Oct 29, 2026), shared by all current roles. */
+const confirmedFacts: Job["facts"] = {
+  location: "Remote — worldwide (outside the United States)",
+  workplace: "Remote",
+  employmentType: "Full-time",
+  compensation: "USD 2,000 per month",
+};
 const notPostable: Job["posting"] = {
   eligible: false,
   datePosted: null,
@@ -91,7 +97,7 @@ export const jobs: Job[] = [
       "Client-facing or consulting experience.",
     ],
     skills: ["Python", "LLM applications", "AI agents", "Machine learning", "Evaluation", "APIs", "Observability"],
-    facts: unconfirmedFacts,
+    facts: confirmedFacts,
     posting: notPostable,
   },
   {
@@ -130,7 +136,7 @@ export const jobs: Job[] = [
       "Supporting analytics or machine learning teams.",
     ],
     skills: ["SQL", "Python", "Data modeling", "Pipelines", "Data quality", "Integrations"],
-    facts: unconfirmedFacts,
+    facts: confirmedFacts,
     posting: notPostable,
   },
   {
@@ -168,7 +174,7 @@ export const jobs: Job[] = [
       "Experience hiring for an early-stage company.",
     ],
     skills: ["Technical sourcing", "Structured interviews", "Candidate experience", "ATS", "Communication"],
-    facts: unconfirmedFacts,
+    facts: confirmedFacts,
     posting: notPostable,
   },
 ];
@@ -201,7 +207,7 @@ export const candidateFaqs: FAQ[] = [
   {
     question: "Where is the role based, and what are the employment terms?",
     answer:
-      "Location, workplace arrangement, employment type, and compensation are shared during the hiring process. If any of these are deal-breakers for you, ask in your application and we'll answer before you invest more time.",
+      "Our current roles are fully remote and open to candidates anywhere in the world except the United States. They are full-time, paid USD 2,000 per month. Other details, such as how the engagement is set up in your country, are discussed during the hiring process — ask in your application if anything is a deal-breaker.",
   },
   {
     question: "What does the application involve?",

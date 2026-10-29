@@ -11,7 +11,7 @@ import { TeamCard } from "@/components/team/team-card";
 import type { IconName } from "@/types/content";
 
 export const metadata = buildMetadata({
-  title: "About Us — The Team Behind Nextmade",
+  title: "About Us — The Team Behind NextMade",
   description: `Meet the ${siteConfig.name} team: CEO Antonio Ortiz, CTO Ricky Lee Sprouse, and senior software engineers Renz Patdu, Parbin Parajuli, and Joseph Zhang.`,
   path: "/about",
 });

@@ -8,7 +8,7 @@ import { inquirySchema } from "@/lib/validation/project-inquiry";
 import { sampleUuid, validInquiry } from "./fixtures";
 
 const unconfigured = readIntakeEnv({});
-const configured = readIntakeEnv({ RESEND_API_KEY: "re_test", EMAIL_FROM: "Nextmade Website <inquiries@verified.example>" });
+const configured = readIntakeEnv({ RESEND_API_KEY: "re_test", EMAIL_FROM: "NextMade Website <inquiries@verified.example>" });
 
 function request(body: unknown, overrides: Partial<SubmissionRequest> = {}): SubmissionRequest {
   return {
@@ -38,7 +38,7 @@ describe("readIntakeEnv", () => {
   });
 
   it("sends as notifications@nextmadelabs.com with Resend unless EMAIL_FROM overrides it", () => {
-    expect(readIntakeEnv({ RESEND_API_KEY: "re_x" }).emailFrom).toBe("Nextmade <notifications@nextmadelabs.com>");
+    expect(readIntakeEnv({ RESEND_API_KEY: "re_x" }).emailFrom).toBe("NextMade <notifications@nextmadelabs.com>");
     expect(readIntakeEnv({ RESEND_API_KEY: "re_x", EMAIL_FROM: "Team <team@nextmadelabs.com>" }).emailFrom).toBe("Team <team@nextmadelabs.com>");
     expect(readIntakeEnv({ SEND_CONFIRMATION_EMAILS: "TRUE" }).sendConfirmations).toBe(true);
   });
@@ -56,7 +56,7 @@ describe("handleInquiry", () => {
     const res = await handleInquiry(request(envelope()), deps(readIntakeEnv({ RESEND_API_KEY: "re_x" }), fetchImpl as unknown as typeof fetch));
     expect(res.body).toEqual({ status: "sent" });
     const payload = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
-    expect(payload.from).toBe("Nextmade <notifications@nextmadelabs.com>");
+    expect(payload.from).toBe("NextMade <notifications@nextmadelabs.com>");
     expect(payload.to).toEqual(["hello@nextmadelabs.com"]);
   });
 
@@ -68,9 +68,9 @@ describe("handleInquiry", () => {
     expect(url).toBe("https://api.resend.com/emails");
     const payload = JSON.parse(String(init.body));
     expect(payload.to).toEqual(["hello@nextmadelabs.com"]);
-    expect(payload.from).toBe("Nextmade Website <inquiries@verified.example>");
+    expect(payload.from).toBe("NextMade Website <inquiries@verified.example>");
     expect(payload.reply_to).toBe("jordan@example.com");
-    expect(payload.subject).toMatch(/^\[Nextmade Inquiry\] New product \/ MVP — Jordan Rivera$/);
+    expect(payload.subject).toMatch(/^\[NextMade Inquiry\] New product \/ MVP — Jordan Rivera$/);
   });
 
   it("returns an error (not sent) when the email provider fails", async () => {

@@ -54,7 +54,7 @@ test.describe("routes", () => {
       const res = await page.goto(route);
       expect(res?.status()).toBe(200);
       await expect(page.locator("h1")).toHaveCount(1);
-      await expect(page).toHaveTitle(/Nextmade/);
+      await expect(page).toHaveTitle(/NextMade/);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow).toBeLessThanOrEqual(0);
     });
@@ -178,7 +178,7 @@ test.describe("careers flow", () => {
     await expect(page.getByRole("heading", { name: /couldn.t send your application/i })).toBeVisible();
     await expect(page.getByText(/we received your application/i)).toHaveCount(0);
     const href = await page.getByRole("link", { name: "Send by Email" }).getAttribute("href");
-    expect(decodeURIComponent(href!)).toContain(`mailto:${CAREERS_EMAIL}?subject=[Nextmade Careers] Senior Software Engineer — Data Engineering — Application`);
+    expect(decodeURIComponent(href!)).toContain(`mailto:${CAREERS_EMAIL}?subject=[NextMade Careers] Senior Software Engineer — Data Engineering — Application`);
   });
 });
 
@@ -299,5 +299,26 @@ test.describe("API guards", () => {
     expect(res.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
     expect(res.headers()["x-content-type-options"]).toBe("nosniff");
     expect(res.headers()["x-frame-options"]).toBe("DENY");
+  });
+});
+
+test.describe("legal and hiring terms", () => {
+  test("Privacy Policy is active (no draft label or placeholders); Terms remain a draft", async ({ page }) => {
+    await page.goto("/privacy");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Privacy Policy");
+    await expect(page.getByText(/not yet reviewed by legal counsel/i)).toHaveCount(0);
+    await expect(page.locator("main")).not.toContainText("[");
+    await expect(page.getByText(/up to 24 months/i)).toBeVisible();
+    await expect(page.getByText(/up to 12 months/i)).toBeVisible();
+    await expect(page.locator("footer")).toContainText("NextMade");
+    await page.goto("/terms");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("(Draft)");
+  });
+
+  test("job pages show the confirmed location, type, and pay", async ({ page }) => {
+    await page.goto("/careers/talent-recruiter");
+    await expect(page.getByText("Remote — worldwide (outside the United States)").first()).toBeVisible();
+    await expect(page.getByText("Full-time").first()).toBeVisible();
+    await expect(page.getByText("USD 2,000 per month").first()).toBeVisible();
   });
 });
