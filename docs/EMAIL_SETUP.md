@@ -34,6 +34,21 @@ Team replies to a client ──► needs a "send as hello@" mailbox (step 4)
 Cloudflare Email Routing only **receives and forwards**. It can't send, so the website needs Resend (or another
 sender) and the team needs a way to reply as `hello@` (step 4).
 
+## Quick start: send through the team Gmail (no DNS changes)
+
+This is the fastest way to make both forms deliver directly, so visitors never see the "couldn't send" screen:
+1. On the team Google account, turn on **2-Step Verification**, then open https://myaccount.google.com/apppasswords
+   and create an app password named "NextMade website".
+2. In `.env.local` (already pre-filled with `SMTP_HOST=smtp.gmail.com`, port 465, the Gmail username, and Gmail as
+   the recipient for both forms), paste the 16-character app password after `SMTP_PASSWORD=`.
+3. Run `npm run email:verify`. It should print "✓ SMTP login … works". Then restart the app.
+4. In Vercel, set the same `SMTP_*`, `BUSINESS_CONTACT_EMAIL`, and `HIRING_EMAIL` variables (mark the password
+   Sensitive), then redeploy.
+
+Notifications then arrive from the Gmail address, with the subject showing the track (`[NextMade Inquiry] …` /
+`[NextMade Careers] …`), and Reply goes to the visitor. Leave confirmations off in this mode. Move to Resend (below)
+when you want everything sent as `@nextmadelabs.com`.
+
 ## Owner steps
 
 ### 1. Create the routes (Cloudflare → nextmadelabs.com → Email → Email Routing)
