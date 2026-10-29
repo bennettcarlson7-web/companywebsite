@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { copyrightHolder, siteConfig } from "@/lib/site-config";
+import { copyrightHolder, mailtoHref, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
 import { LegalPage } from "@/components/sections/legal-page";
 
@@ -51,6 +51,14 @@ export default function TermsPage() {
         will be described in a separate written agreement, which controls over anything on this website.
       </p>
 
+      <h2>Job listings and applications</h2>
+      <p>
+        Role descriptions on our careers pages describe the work as we currently see it and may change. Listing a role
+        or submitting an application does not create an offer, an employment or contractor relationship, or any
+        obligation to interview or hire. Terms such as location, employment type, and compensation are confirmed in
+        writing during the hiring process.
+      </p>
+
       <h2>Third-party links</h2>
       <p>This site may link to other websites. We aren&apos;t responsible for their content or practices.</p>
 
@@ -72,7 +80,11 @@ export default function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        Questions about these terms? Reach us through the{" "}
+        Questions about these terms? Email{" "}
+        <a href={mailtoHref(siteConfig.contact.email, `Terms question — ${siteConfig.name}`)} className="font-medium text-cobalt-700 underline">
+          {siteConfig.contact.email}
+        </a>{" "}
+        or use the{" "}
         <Link href="/contact" className="font-medium text-cobalt-700 underline">
           contact page
         </Link>

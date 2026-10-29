@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { siteConfig } from "@/lib/site-config";
-import { formatArticleDate } from "@/content/insights";
+import { formatArticleDate } from "@/content/insights/format";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Container, Notice } from "@/components/ui/primitives";
 

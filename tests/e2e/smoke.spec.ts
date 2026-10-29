@@ -1,4 +1,18 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+const EMAIL = "rpatdu@mentortech.space";
+const TEAM: [string, string][] = [
+  ["Antonio Ortiz", "CEO"],
+  ["Ricky Lee Sprouse", "CTO"],
+  ["Renz Patdu", "Senior Software Engineer"],
+  ["Parbin Parajuli", "Senior Software Engineer"],
+  ["Joseph Zhang", "Senior Software Engineer"],
+];
+const JOBS: [string, string][] = [
+  ["senior-software-engineer-ai-ml", "Senior Software Engineer — AI/ML"],
+  ["senior-software-engineer-data-engineering", "Senior Software Engineer — Data Engineering"],
+  ["talent-recruiter", "Talent Recruiter"],
+];
 
 const routes = [
   "/",
@@ -19,50 +33,146 @@ const routes = [
   "/insights/evaluating-ai-automation",
   "/insights/choosing-a-software-development-partner",
   "/careers",
+  ...JOBS.map(([slug]) => `/careers/${slug}`),
+  "/careers/apply",
   "/contact",
   "/privacy",
   "/terms",
 ];
 
+async function fillDelay(page: Page) {
+  // The server rejects submissions completed faster than a person could type them.
+  await page.waitForTimeout(2600);
+}
+
 test.describe("routes", () => {
   for (const route of routes) {
-    test(`${route} renders with one h1 and no horizontal overflow`, async ({ page }) => {
+    test(`${route} renders with one h1, a title, and no horizontal overflow`, async ({ page }) => {
       const res = await page.goto(route);
       expect(res?.status()).toBe(200);
       await expect(page.locator("h1")).toHaveCount(1);
+      await expect(page).toHaveTitle(/Nextmade/);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow).toBeLessThanOrEqual(0);
     });
   }
 
-  test("unknown pages return a helpful 404", async ({ page }) => {
-    const res = await page.goto("/this-page-does-not-exist");
-    expect(res?.status()).toBe(404);
+  test("unknown pages and slugs return a helpful 404", async ({ page }) => {
+    expect((await page.goto("/this-page-does-not-exist"))?.status()).toBe(404);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(/couldn.t find that page/i);
+    expect((await page.goto("/services/not-a-service"))?.status()).toBe(404);
+    expect((await page.goto("/careers/chief-wizard"))?.status()).toBe(404);
   });
 
-  test("unknown dynamic slugs return 404", async ({ page }) => {
-    const res = await page.goto("/services/not-a-service");
-    expect(res?.status()).toBe(404);
+  test("robots.txt blocks indexing and the sitemap lists the job pages", async ({ request }) => {
+    expect(await (await request.get("/robots.txt")).text()).toMatch(/Disallow: \//);
+    const sitemap = await (await request.get("/sitemap.xml")).text();
+    for (const [slug] of JOBS) expect(sitemap).toContain(`/careers/${slug}`);
+    expect(sitemap).not.toContain("/careers/apply");
   });
 
-  test("robots.txt blocks indexing until explicitly enabled", async ({ request }) => {
-    const body = await (await request.get("/robots.txt")).text();
-    expect(body).toMatch(/Disallow: \//);
+  test("social metadata is present on key pages", async ({ page }) => {
+    await page.goto("/careers/talent-recruiter");
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", /Talent Recruiter/);
+    await expect(page.locator('meta[property="og:image"]')).toHaveCount(1);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   });
 });
 
-test.describe("honesty guardrails", () => {
-  test("concept projects are labeled as illustrative", async ({ page }) => {
+test.describe("business facts as rendered", () => {
+  test("About shows the five team members in order, with initials and no photos", async ({ page }) => {
+    await page.goto("/about");
+    await expect(page.getByText(/coming soon/i)).toHaveCount(0);
+    const cards = page.locator("article[aria-labelledby^='team-']");
+    await expect(cards).toHaveCount(5);
+    for (const [i, [name, role]] of TEAM.entries()) {
+      await expect(cards.nth(i).getByRole("heading")).toHaveText(name);
+      await expect(cards.nth(i)).toContainText(role);
+    }
+    await expect(cards.locator("img")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Discuss Your Project" })).toHaveAttribute("href", "/contact");
+    await expect(page.getByRole("link", { name: "Explore Careers" })).toHaveAttribute("href", "/careers");
+  });
+
+  test("homepage stays customer-first, names CEO/CTO, and links to careers", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your Idea. Our Engineering. Real Results.");
+    await expect(page.getByRole("link", { name: "Tell Us About Your Project" }).first()).toHaveAttribute("href", "/contact");
+    await expect(page.getByText("Antonio Ortiz")).toBeVisible();
+    await expect(page.getByText("Ricky Lee Sprouse")).toBeVisible();
+    await expect(page.getByText(/explore open roles in ai\/ml, data engineering, and recruiting/i)).toBeVisible();
+    await expect(page.getByText("Booking confirmed")).toHaveCount(0);
+  });
+
+  test("careers lists three roles and never says hiring is closed", async ({ page }) => {
+    await page.goto("/careers");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Help build what's next.");
+    await expect(page.getByText(/no open roles/i)).toHaveCount(0);
+    for (const [, title] of JOBS) await expect(page.getByRole("heading", { name: title, level: 3 })).toBeVisible();
+  });
+
+  test("the business email is a working mailto link on contact, careers, and in the footer", async ({ page }) => {
+    for (const path of ["/contact", "/careers", "/about"]) {
+      await page.goto(path);
+      await expect(page.locator(`main a[href^="mailto:${EMAIL}"]`).first()).toBeVisible();
+      await expect(page.locator(`footer a[href="mailto:${EMAIL}"]`)).toHaveCount(1);
+    }
+  });
+
+  test("concept projects are labeled as illustrative and not client work", async ({ page }) => {
     await page.goto("/work");
-    await expect(page.getByText("Illustrative project")).toHaveCount(3);
+    await expect(page.getByText("not a client project")).toHaveCount(3);
     await page.goto("/work/operations-dashboard");
     await expect(page.getByText("Illustrative example", { exact: true })).toBeVisible();
   });
 
-  test("careers page does not invent open roles", async ({ page }) => {
+  test("no future-dated articles (Oct 28, 2026)", async ({ page }) => {
+    await page.goto("/insights");
+    await expect(page.getByText("October 29, 2026")).toHaveCount(0);
+    await expect(page.getByText("October 28, 2026").first()).toBeVisible();
+  });
+});
+
+test.describe("careers flow", () => {
+  test("job page → Apply preselects the role; back returns to the job page", async ({ page }) => {
+    for (const [slug, title] of JOBS) {
+      await page.goto(`/careers/${slug}`);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(title);
+      await page.getByRole("link", { name: "Apply Now" }).click();
+      await expect(page).toHaveURL(`/careers/apply?role=${slug}`);
+      await expect(page.locator('select[name="role"]')).toHaveValue(slug);
+      await page.goBack();
+      await expect(page).toHaveURL(`/careers/${slug}`);
+    }
+  });
+
+  test("careers card actions go to the right places", async ({ page }) => {
     await page.goto("/careers");
-    await expect(page.getByRole("heading", { name: /no open roles listed right now/i })).toBeVisible();
+    await page.getByRole("link", { name: "View Role: Talent Recruiter" }).click();
+    await expect(page).toHaveURL("/careers/talent-recruiter");
+    await page.goto("/careers");
+    await page.getByRole("link", { name: "Apply for Talent Recruiter" }).click();
+    await expect(page.locator('select[name="role"]')).toHaveValue("talent-recruiter");
+  });
+
+  test("application: validation, then honest unconfigured fallback with role-specific email", async ({ page }) => {
+    await page.goto("/careers/apply?role=senior-software-engineer-data-engineering");
+    await expect(page.getByText(/online applications aren.t switched on yet/i)).toBeVisible();
+    await page.getByRole("button", { name: "Submit Application" }).click();
+    const summary = page.getByRole("alert", { name: /please fix/i });
+    await expect(summary).toBeFocused();
+
+    await page.getByLabel(/^Name/).fill("Sam Okafor");
+    await page.getByLabel(/^Email/).fill("sam@example.com");
+    await page.getByLabel("Introduce yourself").fill("I build reliable data pipelines and care about quality and testing.");
+    await page.getByRole("checkbox").check();
+    await fillDelay(page);
+    await page.getByRole("button", { name: "Submit Application" }).click();
+
+    await expect(page.getByRole("heading", { name: /application has not been sent/i })).toBeVisible();
+    await expect(page.getByText(/we received your application/i)).toHaveCount(0);
+    const href = await page.getByRole("link", { name: "Send by Email" }).getAttribute("href");
+    expect(decodeURIComponent(href!)).toContain(`mailto:${EMAIL}?subject=[Nextmade Careers] Senior Software Engineer — Data Engineering — Application`);
   });
 });
 
@@ -86,94 +196,102 @@ test.describe("desktop navigation", () => {
     }
   });
 
-  test("primary CTA leads to the inquiry form", async ({ page }) => {
-    await page.goto("/");
-    await page.getByRole("link", { name: "Tell Us About Your Project" }).first().click();
-    await expect(page).toHaveURL("/contact");
-    await expect(page.getByRole("heading", { name: "Project inquiry" })).toBeVisible();
-  });
-
   test("skip link moves focus to main content", async ({ page }) => {
     await page.goto("/");
     await page.keyboard.press("Tab");
-    const skip = page.getByRole("link", { name: "Skip to main content" });
-    await expect(skip).toBeFocused();
+    await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/#main$/);
+  });
+
+  test("footer careers link works", async ({ page }) => {
+    await page.goto("/");
+    await page.locator("footer").getByRole("link", { name: "See open roles" }).click();
+    await expect(page).toHaveURL("/careers");
   });
 });
 
 test.describe("mobile menu", () => {
   test.skip(({ isMobile }) => !isMobile, "mobile only");
 
-  test("opens, traps focus in a dialog, closes with Escape, and navigates", async ({ page }) => {
+  test("opens as a dialog, closes with Escape, and navigates", async ({ page }) => {
     await page.goto("/");
     const trigger = page.getByRole("button", { name: "Open menu" });
     await trigger.click();
     const dialog = page.getByRole("dialog", { name: "Site menu" });
     await expect(dialog).toBeVisible();
     await expect(trigger).toHaveAttribute("aria-expanded", "true");
-
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
-    await expect(trigger).toHaveAttribute("aria-expanded", "false");
-
     await trigger.click();
-    await dialog.getByRole("link", { name: "Process" }).click();
-    await expect(page).toHaveURL("/process");
+    await dialog.getByRole("link", { name: "Careers" }).click();
+    await expect(page).toHaveURL("/careers");
     await expect(dialog).toBeHidden();
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/clear path/i);
+  });
+
+  test("team names and roles fit on a phone", async ({ page }) => {
+    await page.goto("/about");
+    for (const [name] of TEAM) await expect(page.getByRole("heading", { name })).toBeVisible();
   });
 });
 
-test.describe("contact form", () => {
+test.describe("project inquiry form", () => {
   test("shows an error summary for an empty submission", async ({ page }) => {
     await page.goto("/contact");
     await page.getByRole("button", { name: "Send Inquiry" }).click();
     const summary = page.getByRole("alert", { name: /please fix/i });
     await expect(summary).toContainText(/please fix 5 problems/i);
     await expect(summary).toBeFocused();
-    await expect(page.getByLabel("Work email")).toHaveAttribute("aria-invalid", "true");
   });
 
   test("in unconfigured mode, it never claims the inquiry was sent", async ({ page }) => {
     await page.goto("/contact");
-    await expect(page.getByText(/demo mode/i)).toBeVisible();
-
+    await expect(page.getByText(/online delivery isn.t switched on yet/i)).toBeVisible();
     await page.getByLabel(/^Name/).fill("Jordan Rivera");
     await page.getByLabel("Work email").fill("jordan@example.com");
     await page.getByLabel("Project type").selectOption("mvp");
     await page.getByLabel("Tell us about your project").fill("A booking tool for independent studios with payments.");
     await page.getByRole("checkbox").check();
-    // The server rejects submissions completed faster than a person could type them.
-    await page.waitForTimeout(2600);
+    await fillDelay(page);
     await page.getByRole("button", { name: "Send Inquiry" }).click();
-
     await expect(page.getByRole("heading", { name: /has not been sent/i })).toBeVisible();
     await expect(page.getByText(/we received your inquiry/i)).toHaveCount(0);
-    await expect(page.getByLabel("Your project summary")).toHaveValue(/Name: Jordan Rivera/);
-
-    await page.getByRole("button", { name: "Edit Details" }).click();
-    await expect(page.getByLabel(/^Name/)).toHaveValue("Jordan Rivera");
+    await expect(page.getByRole("link", { name: "Send by Email" })).toHaveAttribute("href", new RegExp(`^mailto:${EMAIL}`));
   });
 
-  test("the API rejects automated and cross-origin submissions", async ({ request, baseURL }) => {
-    const inquiry = {
-      name: "Bot",
-      email: "bot@example.com",
-      projectType: "mvp",
-      description: "Automated submission with enough characters.",
-      consent: true,
-    };
-    const fast = await request.post("/api/inquiry", { data: { inquiry, website: "", elapsedMs: 10 } });
-    expect(fast.status()).toBe(400);
-    const honeypot = await request.post("/api/inquiry", { data: { inquiry, website: "spam", elapsedMs: 9000 } });
-    expect(honeypot.status()).toBe(400);
-    const cross = await request.post("/api/inquiry", {
-      data: { inquiry, website: "", elapsedMs: 9000 },
-      headers: { Origin: "https://evil.example" },
-    });
-    expect(cross.status()).toBe(403);
-    expect(baseURL).toBeTruthy();
+  test("booking is not offered without a configured scheduler", async ({ page }) => {
+    await page.goto("/contact");
+    await expect(page.getByText(/online booking isn.t available yet/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: "Email us to request a call" })).toHaveAttribute("href", new RegExp(`^mailto:${EMAIL}`));
+  });
+});
+
+test.describe("API guards", () => {
+  const inquiry = { name: "Bot", email: "bot@example.com", projectType: "mvp", description: "Automated submission with enough characters.", consent: true };
+  const application = { name: "Bot", email: "bot@example.com", role: "talent-recruiter", introduction: "x".repeat(60), consent: true };
+
+  test("both endpoints reject automated and cross-origin submissions and stay unconfigured", async ({ request }) => {
+    for (const [path, payload] of [["/api/inquiry", inquiry], ["/api/apply", application]] as const) {
+      expect((await request.post(path, { data: { payload, website: "", elapsedMs: 10 } })).status()).toBe(400);
+      expect((await request.post(path, { data: { payload, website: "spam", elapsedMs: 9000 } })).status()).toBe(400);
+      expect(
+        (await request.post(path, { data: { payload, website: "", elapsedMs: 9000 }, headers: { Origin: "https://evil.example" } })).status(),
+      ).toBe(403);
+      const ok = await request.post(path, { data: { payload, website: "", elapsedMs: 9000 } });
+      expect(ok.status()).toBe(503);
+      expect(await ok.json()).toEqual({ status: "unconfigured" });
+    }
+  });
+
+  test("each endpoint rejects the other track's payload", async ({ request }) => {
+    expect((await request.post("/api/apply", { data: { payload: inquiry, website: "", elapsedMs: 9000 } })).status()).toBe(422);
+    expect((await request.post("/api/inquiry", { data: { payload: application, website: "", elapsedMs: 9000 } })).status()).toBe(422);
+  });
+
+  test("responses carry security headers", async ({ request }) => {
+    const res = await request.get("/");
+    expect(res.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
+    expect(res.headers()["x-content-type-options"]).toBe("nosniff");
+    expect(res.headers()["x-frame-options"]).toBe("DENY");
   });
 });

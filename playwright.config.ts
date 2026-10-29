@@ -24,6 +24,6 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { RESEND_API_KEY: "", INQUIRY_TO_EMAIL: "", HUBSPOT_ACCESS_TOKEN: "", INQUIRY_RATE_LIMIT_MAX: "100" },
+    env: { RESEND_API_KEY: "", EMAIL_FROM: "", HUBSPOT_ACCESS_TOKEN: "", INTAKE_RATE_LIMIT_MAX: "200" },
   },
 });

@@ -44,13 +44,15 @@ src/
     sections/           Page sections + cards (Service/Project/Article/ProcessStep), FAQ, CTA, PageHero
     ui/                 Button, primitives (Container, Section, SectionHeader, Badge…), Breadcrumbs, Reveal, Logo
     visuals/            Original CSS/SVG illustrations (no stock photography)
-    forms/              ContactForm (client)
-  content/              services.ts, projects.ts, process.ts, faqs.ts, home.ts, insights/*.mdx
+    forms/              ProjectInquiryForm, CandidateApplicationForm, shared form-kit (client)
+    team/, careers/     TeamCard (initials avatars), JobCard
+  content/              team.ts, jobs.ts, services.ts, projects.ts, process.ts, faqs.ts, home.ts, insights/
   lib/
-    site-config.ts      ← brand name, contact details, CTAs, nav, roles, team, legal flags
-    seo.tsx             Metadata builder + JSON-LD (only accurate facts)
-    validation/         Shared Zod inquiry schema
-    integrations/       Inquiry pipeline, rate limiting, Resend + HubSpot adapters
+    site-config.ts      ← company facts (brand, business email), CTAs, nav, legal flags
+    seo.tsx             Metadata builder + JSON-LD (only accurate facts; JobPosting gated)
+    validation/         project-inquiry.ts, job-application.ts, shared.ts (Zod)
+    integrations/       submission guard, inquiry + application handlers, Resend + HubSpot adapters, rate limiting
+    analytics.ts        Privacy-safe first-party event hook (no third-party scripts)
   styles/globals.css    Design tokens (Tailwind @theme)
   types/                Content types
 tests/
@@ -61,13 +63,17 @@ docs/                   Implementation plan, launch checklist
 
 ## Editing content
 
-- **Business details, brand name, CTAs, nav, open roles, team:** `src/lib/site-config.ts`
+- **Company facts (brand, business email), CTAs, nav:** `src/lib/site-config.ts` (`company` export)
+- **Team:** `src/content/team.ts`. Exact names/roles only; add `photo`/`profileUrl` only when real and approved.
+- **Jobs:** `src/content/jobs.ts`. Unconfirmed facts (location, type, pay) stay `null`; see `docs/OWNER_DECISIONS.md`.
+- **Open owner questions:** `docs/OWNER_DECISIONS.md`. **Launch status:** `docs/FINAL_LAUNCH_AUDIT.md`.
 - **Services** (cards, detail pages, FAQs): `src/content/services.ts`
 - **Portfolio:** `src/content/projects.ts`. All entries are `kind: "concept"` and render an
-  "Illustrative project" label. Add real work as `kind: "case-study"` only with client-approved facts.
+  "Illustrative concept — not a client project" label. Add real work as `kind: "case-study"` only with client-approved facts.
 - **Process, home-page copy, FAQs:** `src/content/process.ts`, `home.ts`, `faqs.ts`
-- **Articles:** add `src/content/insights/my-article.mdx`, then register it with metadata in
-  `src/content/insights/index.ts`. Headings in MDX start at `##`.
+- **Articles:** add `src/content/insights/my-article.mdx`, add its metadata to `src/content/insights/meta.ts`
+  (U.S. Pacific publish date, never in the future; a test enforces this), and register the body in `index.ts`.
+  Headings in MDX start at `##`.
 - **Legal pages:** `src/app/privacy/page.tsx`, `src/app/terms/page.tsx`. Set
   `siteConfig.legal.policiesAreDrafts = false` only after legal review.
 
@@ -82,37 +88,57 @@ See [.env.example](.env.example) for the full annotated list.
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | build | Canonical base URL; enables canonical tags, JSON-LD, absolute sitemap |
 | `NEXT_PUBLIC_ALLOW_INDEXING` | build | `true` to allow search engines (also requires the URL) |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | build | Public inbox shown on the site and used for mailto fallbacks |
-| `NEXT_PUBLIC_CAREERS_EMAIL` | build | Optional careers inbox |
-| `NEXT_PUBLIC_SCHEDULING_URL` | build | Real booking link; without it, "discovery call" CTAs go to `/contact` |
 | `NEXT_PUBLIC_LINKEDIN_URL` / `_GITHUB_URL` / `_X_URL` | build | Footer social links (hidden when empty) |
-| `RESEND_API_KEY`, `INQUIRY_TO_EMAIL`, `INQUIRY_FROM_EMAIL` | server | Email delivery of inquiries (all three required) |
-| `HUBSPOT_ACCESS_TOKEN` | server | Optional: also create a HubSpot contact |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | server | Optional distributed rate limiting |
-| `INQUIRY_RATE_LIMIT_MAX`, `INQUIRY_RATE_LIMIT_WINDOW_SECONDS` | server | Defaults: 5 per 600 s per IP |
+| `BOOKING_URL` | build (server) | Real booking link; without it, visitors are asked to request a call by email |
+| `RESEND_API_KEY`, `EMAIL_FROM` | server | Email delivery for both forms. **Both** are required, or the forms fail closed. `EMAIL_FROM` must be on a domain verified in Resend |
+| `BUSINESS_CONTACT_EMAIL` | server | Inquiry recipient (default `rpatdu@mentortech.space`) |
+| `HIRING_EMAIL` | server | Application recipient (default: the business inbox) |
+| `HUBSPOT_ACCESS_TOKEN` | server | Optional: also create a HubSpot contact for **project inquiries only** |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | server | Distributed rate limiting (recommended on Vercel) |
+| `INTAKE_RATE_LIMIT_MAX`, `INTAKE_RATE_LIMIT_WINDOW_SECONDS` | server | Per form, per IP. Defaults: 5 per 600 s |
 
-`NEXT_PUBLIC_*` values are inlined at **build** time, so rebuild after changing them. Server-only values are read
-per request by `/api/inquiry`.
+The public business email (`rpatdu@mentortech.space`) is owner-supplied and lives in `company.contactEmail`, not in
+an env var. Legacy names (`INQUIRY_TO_EMAIL`, `INQUIRY_FROM_EMAIL`, `NEXT_PUBLIC_SCHEDULING_URL`,
+`INQUIRY_RATE_LIMIT_*`) are still read as fallbacks.
 
-## Lead handling
+Build-time values are inlined when the site is built, so redeploy after changing them. Server-only values are read
+per request by the API routes.
 
-`POST /api/inquiry` runs: same-origin check → JSON content type and 16 KB body cap → rate limit →
-honeypot and minimum fill-time check → Zod validation → delivery.
+## Lead and application handling
 
-- **Configured** (Resend and/or HubSpot): the visitor sees "received" only after the primary provider accepts
-  the message. Provider failures return a clear error, and the form keeps the visitor's input.
-- **Unconfigured**: the server returns `503 { status: "unconfigured" }`. The form says plainly that nothing was
-  sent and offers a copyable summary, plus a pre-filled email link if `NEXT_PUBLIC_CONTACT_EMAIL` is set. The
-  contact page also shows a "demo mode" notice before submission.
-- **Logging**: only outcome codes are logged, never names, emails, or descriptions.
+Two separate tracks share one abuse guard (same-origin check → JSON content type and 16 KB cap → per-form, per-IP
+rate limit → honeypot and minimum fill time → submission-ID dedupe), then diverge:
 
-**Rate limiting on serverless:** the default limiter keeps counts in process memory, so each serverless instance
-has its own counter and it resets on cold starts. That is fine for development, but it is not real protection
-in production. Configure Upstash Redis (free tier is sufficient) to get a shared limit.
+| | Project inquiry | Job application |
+| --- | --- | --- |
+| Page / form | `/contact` · `ProjectInquiryForm` | `/careers/apply?role=<slug>` · `CandidateApplicationForm` |
+| Endpoint | `POST /api/inquiry` | `POST /api/apply` |
+| Schema | `lib/validation/project-inquiry.ts` | `lib/validation/job-application.ts` (https-only links, no uploads) |
+| Delivered to | `BUSINESS_CONTACT_EMAIL` (+ optional HubSpot) | `HIRING_EMAIL` (email only, never the CRM) |
+| Subject | `[Nextmade Inquiry] <type> — <name>` | `[Nextmade Careers] <role> — Application` |
+| Analytics event | `project_inquiry_submitted` (outcome, project type) | `job_application_submitted` (outcome, role slug) |
 
-To enable email with Resend: verify your sending domain in Resend, create an API key, and set
-`RESEND_API_KEY`, `INQUIRY_TO_EMAIL`, and `INQUIRY_FROM_EMAIL` (e.g. `Nextmade Website <inquiries@yourdomain.com>`).
+- **Configured:** the visitor sees "received" only after Resend accepts the message (2xx). Failures say "not sent"
+  and keep the input. `from` is always `EMAIL_FROM`; the visitor or candidate is only `reply_to`.
+- **Unconfigured (fails closed):** the API returns `503 { status: "unconfigured" }`, and the form says nothing was
+  sent and offers a one-click prefilled email to the right inbox plus a copyable summary. A notice above each form
+  says so up front, and it disappears automatically once delivery is configured and redeployed.
+- **Logging:** outcome codes only (plus the role slug for applications), never names, emails, links, or text.
+- **Analytics:** no third-party scripts. Events are dispatched as `nextmade:analytics` DOM events (and pushed to
+  `window.dataLayer` only if a consented tag manager creates it), without personal data.
 
+**Rate limiting on serverless:** without Upstash, counts live in each serverless instance's memory and reset on
+cold starts, which isn't real protection. Configure Upstash Redis before enabling delivery.
+
+### Enabling email (Resend)
+
+1. Verify a sending domain in Resend (adds SPF/DKIM DNS records). Owner decision: which domain (see
+   `docs/OWNER_DECISIONS.md` #2–3).
+2. Create an API key with sending permission.
+3. In Vercel, set `RESEND_API_KEY` and `EMAIL_FROM` (e.g. `Nextmade Website <website@yourdomain.com>`); optionally
+   `HIRING_EMAIL`. Redeploy.
+4. Submit one project inquiry and one application. Confirm both arrive at `rpatdu@mentortech.space`, that Reply goes
+   to the submitter, and that they don't land in spam. Then update `docs/FINAL_LAUNCH_AUDIT.md`.
 ## SEO
 
 - Per-page metadata via `buildMetadata()`, title template, Open Graph/Twitter cards, and a generated default OG

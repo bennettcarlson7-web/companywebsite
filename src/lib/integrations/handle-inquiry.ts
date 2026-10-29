@@ -1,94 +1,46 @@
-import { envelopeSchema, inquirySchema, LIMITS, toFieldErrors, type InquiryResponse } from "@/lib/validation/inquiry";
-import { isCrmConfigured, isEmailConfigured, type InquiryEnv } from "./env";
+import { inquiryFieldErrors, inquirySchema, type InquiryResponse } from "@/lib/validation/project-inquiry";
+import { isCrmConfigured, isEmailConfigured, type IntakeEnv } from "./env";
 import type { RateLimiter } from "./rate-limit";
-import { sendInquiryEmail, sendInquiryToHubSpot, type DeliveryResult } from "./deliver";
-
-export type InquiryRequest = {
-  rawBody: string;
-  contentType: string | null;
-  ip: string;
-  origin: string | null;
-  host: string | null;
-};
+import { sendEmail, type DeliveryResult } from "./email";
+import { buildInquiryEmail, sendInquiryToHubSpot } from "./deliver";
+import { DeliveredSubmissions, defaultLogger, guardSubmission, type Logger, type SubmissionRequest } from "./submission-guard";
 
 export type InquiryDeps = {
-  env: InquiryEnv;
+  env: IntakeEnv;
   limiter: RateLimiter;
   fetchImpl?: typeof fetch;
-  log?: (event: Record<string, unknown>) => void;
+  log?: Logger;
+  delivered?: DeliveredSubmissions;
 };
 
 export type InquiryResult = { httpStatus: number; body: InquiryResponse; headers?: Record<string, string> };
 
-/**
- * Framework-agnostic inquiry pipeline:
- * origin check → size/content-type → rate limit → parse → spam signals → validation → delivery.
- * Logs contain outcomes only — never names, emails, or project descriptions.
- */
-export async function handleInquiry(req: InquiryRequest, deps: InquiryDeps): Promise<InquiryResult> {
-  const log = deps.log ?? ((e) => console.info(JSON.stringify({ event: "inquiry", ...e })));
+const deliveredInquiries = new DeliveredSubmissions();
 
-  if (req.origin && req.host) {
-    let originHost: string | null = null;
-    try {
-      originHost = new URL(req.origin).host;
-    } catch {
-      /* invalid origin falls through to rejection */
-    }
-    if (originHost !== req.host) {
-      log({ outcome: "rejected", reason: "origin" });
-      return { httpStatus: 403, body: { status: "rejected" } };
-    }
-  }
+/** Customer project inquiry: shared guard → inquiry schema → email (+ optional CRM). */
+export async function handleInquiry(req: SubmissionRequest, deps: InquiryDeps): Promise<InquiryResult> {
+  const log = deps.log ?? defaultLogger("inquiry");
+  const delivered = deps.delivered ?? deliveredInquiries;
 
-  if (!req.contentType?.toLowerCase().startsWith("application/json")) {
-    return { httpStatus: 415, body: { status: "rejected" } };
-  }
-  if (new TextEncoder().encode(req.rawBody).length > LIMITS.bodyBytes) {
-    log({ outcome: "rejected", reason: "too_large" });
-    return { httpStatus: 413, body: { status: "rejected" } };
-  }
+  const guard = await guardSubmission(req, { namespace: "inquiry", limiter: deps.limiter, log });
+  if (!guard.ok) return { httpStatus: guard.httpStatus, body: guard.body, headers: guard.headers };
 
-  let limit;
-  try {
-    limit = await deps.limiter.hit(req.ip);
-  } catch {
-    // If the shared limiter is unavailable, fail open rather than blocking real leads.
-    log({ outcome: "limiter_unavailable" });
-    limit = { allowed: true, retryAfterSeconds: 0 };
-  }
-  if (!limit.allowed) {
-    log({ outcome: "rate_limited" });
-    return {
-      httpStatus: 429,
-      body: { status: "rate_limited", retryAfterSeconds: limit.retryAfterSeconds },
-      headers: { "Retry-After": String(limit.retryAfterSeconds) },
-    };
-  }
-
-  let json: unknown;
-  try {
-    json = JSON.parse(req.rawBody);
-  } catch {
-    return { httpStatus: 400, body: { status: "rejected" } };
-  }
-  const envelope = envelopeSchema.safeParse(json);
-  if (!envelope.success) return { httpStatus: 400, body: { status: "rejected" } };
-
-  const { website, elapsedMs, inquiry: raw } = envelope.data;
-  if ((website && website.length > 0) || elapsedMs === undefined || elapsedMs < LIMITS.minFillMs) {
-    log({ outcome: "rejected", reason: "spam_signal" });
-    return { httpStatus: 400, body: { status: "rejected" } };
-  }
-
-  const parsed = inquirySchema.safeParse(raw);
+  const parsed = inquirySchema.safeParse(guard.payload);
   if (!parsed.success) {
     log({ outcome: "invalid" });
-    return { httpStatus: 422, body: { status: "invalid", fieldErrors: toFieldErrors(parsed.error) } };
+    return { httpStatus: 422, body: { status: "invalid", fieldErrors: inquiryFieldErrors(parsed.error) } };
+  }
+
+  if (delivered.has(guard.submissionId)) {
+    log({ outcome: "duplicate_ignored" });
+    return { httpStatus: 200, body: { status: "sent" } };
   }
 
   const channels: Promise<DeliveryResult>[] = [];
-  if (isEmailConfigured(deps.env)) channels.push(sendInquiryEmail(parsed.data, deps.env, deps.fetchImpl));
+  if (isEmailConfigured(deps.env)) {
+    const { subject, html, text } = buildInquiryEmail(parsed.data);
+    channels.push(sendEmail({ to: deps.env.businessTo, replyTo: parsed.data.email, subject, html, text }, deps.env, deps.fetchImpl));
+  }
   if (isCrmConfigured(deps.env)) channels.push(sendInquiryToHubSpot(parsed.data, deps.env, deps.fetchImpl));
 
   if (channels.length === 0) {
@@ -104,6 +56,7 @@ export async function handleInquiry(req: InquiryRequest, deps: InquiryDeps): Pro
   const primary = results.find((r) => r.channel === "email") ?? results[0]!;
   if (!primary.ok) return { httpStatus: 502, body: { status: "error" } };
 
+  delivered.add(guard.submissionId);
   log({ outcome: "sent", channels: results.filter((r) => r.ok).map((r) => r.channel) });
   return { httpStatus: 200, body: { status: "sent" } };
 }

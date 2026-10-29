@@ -8,6 +8,8 @@ import { Icon, IconTile } from "@/components/ui/icon";
 import { Container, Section, SectionHeader } from "@/components/ui/primitives";
 import { Reveal } from "@/components/ui/reveal";
 import { HeroVisual } from "@/components/visuals/hero-visual";
+import { TeamAvatar } from "@/components/team/team-card";
+import { getLeadership } from "@/content/team";
 import { ArticleCard, ProjectCard, ServiceCard } from "./cards";
 
 export function HomeHero() {
@@ -30,7 +32,7 @@ export function HomeHero() {
           >
             {hero.headline.map((line) => (
               <span key={line} className="block">
-                {line}
+                {line}{" "}
               </span>
             ))}
             <span className="block bg-gradient-to-r from-cobalt-700 to-cobalt-500 bg-clip-text text-transparent">
@@ -203,20 +205,34 @@ export function FounderStory() {
                   months for software that should take weeks to plan.
                 </p>
                 <p>
-                  {siteConfig.name} is a founder-led studio started to close that gap: a small, senior team that treats
-                  your product like it matters, explains every decision in plain language, and stays honest about
-                  trade-offs — even when that means recommending less.
+                  {siteConfig.name} was started to close that gap: a small, senior-led team that treats your product
+                  like it matters, explains every decision in plain language, and stays honest about trade-offs — even
+                  when that means recommending less.
                 </p>
               </div>
-              {siteConfig.founderNote && (
+              {siteConfig.leadershipNote && (
                 <figure className="mt-8 border-l-2 border-cobalt-400 pl-5">
-                  <blockquote className="text-white">{siteConfig.founderNote.body}</blockquote>
-                  <figcaption className="mt-2 text-sm text-slate-400">— {siteConfig.founderNote.signature}</figcaption>
+                  <blockquote className="text-white">{siteConfig.leadershipNote.body}</blockquote>
+                  <figcaption className="mt-2 text-sm text-slate-400">— {siteConfig.leadershipNote.signature}</figcaption>
                 </figure>
               )}
-              <div className="mt-8">
+              <div className="mt-8 border-t border-white/10 pt-8">
+                <h3 className="text-sm font-semibold tracking-wide text-cobalt-200 uppercase">Meet the people behind {siteConfig.name}</h3>
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {getLeadership().map((m) => (
+                    <li key={m.name} className="flex items-center gap-3 rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+                      <TeamAvatar member={m} size="md" />
+                      <span>
+                        <span className="block font-semibold text-white">{m.name}</span>
+                        <span className="block text-sm text-slate-300">{m.role}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="mt-6">
                 <ButtonLink href="/about" variant="inverse" arrow>
-                  Read our story
+                  Meet the Team
                 </ButtonLink>
               </div>
             </div>
@@ -234,6 +250,30 @@ export function FounderStory() {
         </Reveal>
       </Container>
     </Section>
+  );
+}
+
+/** Deliberately compact: recruiting is visible on the homepage without competing with the customer CTA. */
+export function RecruitingAnnouncement() {
+  return (
+    <section aria-labelledby="hiring-heading" className="bg-white">
+      <Container>
+        <div className="flex flex-col gap-4 rounded-2xl border border-line bg-paper px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span aria-hidden="true" className="mt-1.5 size-2 shrink-0 rounded-full bg-success-700" />
+            <div>
+              <h2 id="hiring-heading" className="text-base font-semibold">
+                We&apos;re growing.
+              </h2>
+              <p className="text-sm text-slate-600">Explore open roles in AI/ML, data engineering, and recruiting.</p>
+            </div>
+          </div>
+          <TextLink href="/careers" className="shrink-0">
+            {siteConfig.cta.careers.label}
+          </TextLink>
+        </div>
+      </Container>
+    </section>
   );
 }
 
