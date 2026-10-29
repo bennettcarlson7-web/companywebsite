@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import type { IntakeEnv } from "./env";
 
-export type DeliveryResult = { channel: "email" | "crm"; ok: boolean; detail?: string };
+export type DeliveryResult = { channel: "email" | "crm" | "store"; ok: boolean; detail?: string };
 
 export type EmailMessage = {
   to: string;

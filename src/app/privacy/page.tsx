@@ -79,6 +79,7 @@ export default function PrivacyPage() {
       <p>We use these providers to run the site and handle messages. They process information on our behalf, only as needed to provide their services:</p>
       <ul>
         <li>Vercel — website hosting.</li>
+        <li>Upstash — secure storage of submitted inquiries and applications, so nothing is lost if email is delayed.</li>
         <li>Cloudflare — domain name services and routing of email sent to our addresses.</li>
         <li>Resend — sending form submissions to our team and confirmations back to you.</li>
         <li>Google (Gmail) — the mailbox where our team reads and answers email.</li>

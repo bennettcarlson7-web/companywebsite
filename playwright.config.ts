@@ -17,9 +17,9 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
-  // Runs against a production build. The inquiry endpoint is deliberately left
-  // unconfigured (no SMTP or Resend credentials, even if .env.local has them) so the tests exercise the safe
-  // "not configured" path and never send real email.
+  // Runs against a production build. Email is deliberately disabled (no SMTP or Resend credentials, even if
+  // .env.local has them) so tests never send real mail; submissions are saved to a throwaway test-results folder,
+  // which is how the real site receives them when email isn't configured.
   webServer: {
     command: `npm run start -- --port ${port} --hostname 127.0.0.1`,
     url: baseURL,
@@ -32,6 +32,9 @@ export default defineConfig({
       RESEND_API_KEY: "",
       EMAIL_FROM: "",
       HUBSPOT_ACCESS_TOKEN: "",
+      UPSTASH_REDIS_REST_URL: "",
+      UPSTASH_REDIS_REST_TOKEN: "",
+      SUBMISSIONS_DIR: "test-results/e2e-submissions",
       INTAKE_RATE_LIMIT_MAX: "200",
     },
   },

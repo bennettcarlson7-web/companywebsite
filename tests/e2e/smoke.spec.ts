@@ -161,7 +161,7 @@ test.describe("careers flow", () => {
     await expect(page.locator('select[name="role"]')).toHaveValue("talent-recruiter");
   });
 
-  test("application: validation, then honest unconfigured fallback with role-specific email", async ({ page }) => {
+  test("application: validation, then one-click submit confirms receipt with no email step", async ({ page }) => {
     await page.goto("/careers/apply?role=senior-software-engineer-data-engineering");
     await expect(page.getByText(/switched on/i)).toHaveCount(0);
     await page.getByRole("button", { name: "Submit Application" }).click();
@@ -175,10 +175,13 @@ test.describe("careers flow", () => {
     await fillDelay(page);
     await page.getByRole("button", { name: "Submit Application" }).click();
 
-    await expect(page.getByRole("heading", { name: /couldn.t send your application/i })).toBeVisible();
-    await expect(page.getByText(/we received your application/i)).toHaveCount(0);
-    const href = await page.getByRole("link", { name: "Send by Email" }).getAttribute("href");
-    expect(decodeURIComponent(href!)).toContain(`mailto:${CAREERS_EMAIL}?subject=[NextMade Careers] Senior Software Engineer — Data Engineering — Application`);
+    await expect(page.getByText(/we received your application/i)).toBeVisible();
+    await expect(page.getByText("Senior Software Engineer — Data Engineering").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: /couldn.t send/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Send by Email" })).toHaveCount(0);
+    // The careers contact link still points at the hiring inbox.
+    await page.goto("/careers");
+    await expect(page.getByRole("link", { name: "Email our hiring team" })).toHaveAttribute("href", new RegExp(`^mailto:${CAREERS_EMAIL}`));
   });
 });
 
@@ -250,7 +253,7 @@ test.describe("project inquiry form", () => {
     await expect(summary).toBeFocused();
   });
 
-  test("in unconfigured mode, it never claims the inquiry was sent", async ({ page }) => {
+  test("one-click submit confirms the inquiry was received, with no email step", async ({ page }) => {
     await page.goto("/contact");
     await expect(page.getByText(/switched on/i)).toHaveCount(0);
     await page.getByLabel(/^Name/).fill("Jordan Rivera");
@@ -260,9 +263,9 @@ test.describe("project inquiry form", () => {
     await page.getByRole("checkbox").check();
     await fillDelay(page);
     await page.getByRole("button", { name: "Send Inquiry" }).click();
-    await expect(page.getByRole("heading", { name: /couldn.t send your inquiry/i })).toBeVisible();
-    await expect(page.getByText(/we received your inquiry/i)).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Send by Email" })).toHaveAttribute("href", new RegExp(`^mailto:${EMAIL}`));
+    await expect(page.getByText(/we received your inquiry/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /couldn.t send/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Send by Email" })).toHaveCount(0);
   });
 
   test("booking is not offered without a configured scheduler", async ({ page }) => {
@@ -276,7 +279,7 @@ test.describe("API guards", () => {
   const inquiry = { name: "Bot", email: "bot@example.com", projectType: "mvp", description: "Automated submission with enough characters.", consent: true };
   const application = { name: "Bot", email: "bot@example.com", role: "talent-recruiter", introduction: "x".repeat(60), consent: true };
 
-  test("both endpoints reject automated and cross-origin submissions and stay unconfigured", async ({ request }) => {
+  test("both endpoints reject automated and cross-origin submissions, and accept genuine ones", async ({ request }) => {
     for (const [path, payload] of [["/api/inquiry", inquiry], ["/api/apply", application]] as const) {
       expect((await request.post(path, { data: { payload, website: "", elapsedMs: 10 } })).status()).toBe(400);
       expect((await request.post(path, { data: { payload, website: "spam", elapsedMs: 9000 } })).status()).toBe(400);
@@ -284,8 +287,8 @@ test.describe("API guards", () => {
         (await request.post(path, { data: { payload, website: "", elapsedMs: 9000 }, headers: { Origin: "https://evil.example" } })).status(),
       ).toBe(403);
       const ok = await request.post(path, { data: { payload, website: "", elapsedMs: 9000 } });
-      expect(ok.status()).toBe(503);
-      expect(await ok.json()).toEqual({ status: "unconfigured" });
+      expect(ok.status()).toBe(200);
+      expect(await ok.json()).toEqual({ status: "sent" });
     }
   });
 

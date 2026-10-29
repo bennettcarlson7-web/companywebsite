@@ -133,6 +133,20 @@ rate limit → honeypot and minimum fill time → submission-ID dedupe), then di
 **Rate limiting on serverless:** without Upstash, counts live in each serverless instance's memory and reset on
 cold starts, which isn't real protection. Configure Upstash Redis before enabling delivery.
 
+### Where submissions go (one-click, like an ATS)
+
+Like Greenhouse or Lever, the site **saves every accepted application and inquiry first**. Email is a notification on
+top. Visitors click Submit once and see "We received…" as soon as the submission is saved *or* emailed. If neither
+worked, they get an honest error, never a false confirmation.
+
+| Where it runs | Saved to | Read them with |
+| --- | --- | --- |
+| Local / any long-running server | `.data/submissions/applications.jsonl` and `inquiries.jsonl` (git-ignored, owner-only file permissions) | `npm run submissions` (`-- applications` or `-- inquiries`) |
+| Vercel (serverless) | Upstash Redis, when `UPSTASH_REDIS_REST_URL`/`TOKEN` are set. Kept for the Privacy Policy retention periods (TTL) | `npm run submissions` with the Upstash vars in `.env.local`, or the Upstash console |
+
+On Vercel, set Upstash **or** email. With neither, there's nowhere durable to put a submission, so the form falls back
+to the "send by email" screen. `SUBMISSIONS_DIR` overrides the folder (`off` disables file storage).
+
 ### Enabling email delivery
 
 Full owner steps, including the DNS records: **[docs/EMAIL_SETUP.md](docs/EMAIL_SETUP.md)**. In short:

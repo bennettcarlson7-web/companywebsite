@@ -23,6 +23,11 @@ export type IntakeEnv = {
   hiringTo: string;
   /** Send a short "we received it" email to the visitor/candidate after their message is delivered to us. */
   sendConfirmations: boolean;
+  /**
+   * Where submissions are saved on disk (like an ATS inbox), so a submission is received even when email isn't set up.
+   * Default `.data/submissions` locally; off on Vercel, whose filesystem doesn't persist (Upstash is used there).
+   */
+  submissionsDir?: string;
   hubspotToken?: string;
   upstashUrl?: string;
   upstashToken?: string;
@@ -54,6 +59,8 @@ export function readIntakeEnv(env: Record<string, string | undefined> = process.
     businessTo: val(env.BUSINESS_CONTACT_EMAIL) ?? val(env.INQUIRY_TO_EMAIL) ?? company.contactEmail,
     hiringTo: val(env.HIRING_EMAIL) ?? company.careersEmail,
     sendConfirmations: val(env.SEND_CONFIRMATION_EMAILS)?.toLowerCase() === "true",
+    submissionsDir:
+      val(env.SUBMISSIONS_DIR)?.toLowerCase() === "off" ? undefined : (val(env.SUBMISSIONS_DIR) ?? (env.VERCEL ? undefined : ".data/submissions")),
     hubspotToken: val(env.HUBSPOT_ACCESS_TOKEN),
     upstashUrl: val(env.UPSTASH_REDIS_REST_URL),
     upstashToken: val(env.UPSTASH_REDIS_REST_TOKEN),

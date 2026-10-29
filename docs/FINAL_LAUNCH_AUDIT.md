@@ -24,8 +24,9 @@ site (companywebsite-smoky.vercel.app) still serves `version1.0` and was not cha
    destination). Until they do, mail to those addresses, and the site's notifications, will bounce.
 4. **Terms of Use are still a draft** (no governing-law state). The **Privacy Policy is now active**, with retention
    periods, providers, transfers, and rights. Counsel review is still recommended for EU/UK candidates.
-5. **Rate limiting isn't distributed on Vercel.** Without Upstash, limits are per serverless instance. Configure
-   `UPSTASH_REDIS_REST_URL`/`TOKEN` before enabling delivery.
+5. **Upstash is needed on Vercel.** It now does two jobs: durable storage of submissions (so one-click submit works on
+   the live site without email) and distributed rate limiting. Set `UPSTASH_REDIS_REST_URL`/`TOKEN` in Vercel before
+   launch. Locally, submissions are saved to `.data/submissions` and read with `npm run submissions`.
 
 ## Checks
 

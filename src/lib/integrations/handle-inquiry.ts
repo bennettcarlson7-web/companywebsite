@@ -4,6 +4,7 @@ import type { RateLimiter } from "./rate-limit";
 import { sendEmail, type DeliveryResult, type SmtpSender } from "./email";
 import { buildInquiryEmail, sendInquiryToHubSpot } from "./deliver";
 import { buildInquiryConfirmation, sendConfirmation } from "./confirmation";
+import { saveSubmission, type SubmissionStore } from "./submission-store";
 import { DeliveredSubmissions, defaultLogger, guardSubmission, type Logger, type SubmissionRequest } from "./submission-guard";
 
 export type InquiryDeps = {
@@ -12,6 +13,8 @@ export type InquiryDeps = {
   fetchImpl?: typeof fetch;
   /** Test hook: replaces the real SMTP transport. */
   smtpSender?: SmtpSender;
+  /** Where accepted inquiries are saved. */
+  store?: SubmissionStore;
   log?: Logger;
   delivered?: DeliveredSubmissions;
 };
@@ -40,6 +43,13 @@ export async function handleInquiry(req: SubmissionRequest, deps: InquiryDeps): 
   }
 
   const channels: Promise<DeliveryResult>[] = [];
+  if (deps.store) {
+    channels.push(
+      saveSubmission(deps.store, { id: guard.submissionId ?? crypto.randomUUID(), kind: "inquiry", receivedAt: new Date().toISOString(), data: { ...parsed.data } }).then(
+        (r) => ({ channel: "store" as const, ok: Boolean(r?.ok), detail: r?.detail }),
+      ),
+    );
+  }
   if (isEmailConfigured(deps.env)) {
     const { subject, html, text } = buildInquiryEmail(parsed.data);
     channels.push(sendEmail({ to: deps.env.businessTo, replyTo: parsed.data.email, subject, html, text }, deps.env, deps.fetchImpl, deps.smtpSender));
@@ -55,14 +65,15 @@ export async function handleInquiry(req: SubmissionRequest, deps: InquiryDeps): 
   const failures = results.filter((r) => !r.ok).map((r) => r.detail ?? r.channel);
   if (failures.length) log({ outcome: "delivery_failure", failures });
 
-  // The visitor only sees "sent" if the primary channel (email, when configured) accepted it.
-  const primary = results.find((r) => r.channel === "email") ?? results[0]!;
-  if (!primary.ok) return { httpStatus: 502, body: { status: "error" } };
+  // "Sent" only when we durably have it: saved, or accepted by email (or by the CRM when it's the only channel).
+  const byChannel = (c: DeliveryResult["channel"]) => results.find((r) => r.channel === c);
+  const received = byChannel("store")?.ok || byChannel("email")?.ok || (!byChannel("email") && !byChannel("store") && byChannel("crm")?.ok);
+  if (!received) return { httpStatus: 502, body: { status: "error" } };
 
   delivered.add(guard.submissionId);
   log({ outcome: "sent", channels: results.filter((r) => r.ok).map((r) => r.channel) });
 
-  if (isEmailConfigured(deps.env)) {
+  if (byChannel("email")?.ok) {
     const confirmation = await sendConfirmation(
       buildInquiryConfirmation(parsed.data.name, parsed.data.email, deps.env),
       deps.env,

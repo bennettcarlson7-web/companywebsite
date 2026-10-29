@@ -5,6 +5,7 @@ import { isApplicationDeliveryConfigured, type IntakeEnv } from "./env";
 import type { RateLimiter } from "./rate-limit";
 import { renderNotificationHtml, sendEmail, type SmtpSender } from "./email";
 import { buildApplicationConfirmation, sendConfirmation } from "./confirmation";
+import { saveSubmission, type SubmissionStore } from "./submission-store";
 import { DeliveredSubmissions, defaultLogger, guardSubmission, type Logger, type SubmissionRequest } from "./submission-guard";
 
 export type ApplicationDeps = {
@@ -13,6 +14,8 @@ export type ApplicationDeps = {
   fetchImpl?: typeof fetch;
   /** Test hook: replaces the real SMTP transport. */
   smtpSender?: SmtpSender;
+  /** Where accepted applications are saved. Without one, delivery depends on email alone. */
+  store?: SubmissionStore;
   log?: Logger;
   delivered?: DeliveredSubmissions;
 };
@@ -60,7 +63,7 @@ export function buildApplicationEmail(app: Application) {
   return { subject: applicationSubject(role), html, text: formatApplicationText(app) };
 }
 
-/** Candidate application: shared guard → application schema → email to the hiring inbox only. */
+/** Candidate application: shared guard → application schema → saved + emailed to the hiring inbox (never the CRM). */
 export async function handleApplication(req: SubmissionRequest, deps: ApplicationDeps): Promise<ApplicationResult> {
   const log = deps.log ?? defaultLogger("application");
   const delivered = deps.delivered ?? deliveredApplications;
@@ -79,20 +82,32 @@ export async function handleApplication(req: SubmissionRequest, deps: Applicatio
     return { httpStatus: 200, body: { status: "sent" } };
   }
 
-  if (!isApplicationDeliveryConfigured(deps.env)) {
+  const emailConfigured = isApplicationDeliveryConfigured(deps.env);
+  if (!deps.store && !emailConfigured) {
     log({ outcome: "unconfigured", role: parsed.data.role });
     return { httpStatus: 503, body: { status: "unconfigured" } };
   }
 
-  const { subject, html, text } = buildApplicationEmail(parsed.data);
-  const result = await sendEmail({ to: deps.env.hiringTo, replyTo: parsed.data.email, subject, html, text }, deps.env, deps.fetchImpl, deps.smtpSender);
-  if (!result.ok) {
-    log({ outcome: "delivery_failure", failures: [result.detail ?? "email"], role: parsed.data.role });
-    return { httpStatus: 502, body: { status: "error" } };
+  // Like an ATS: save the application first; email is a notification on top. Either one means we have it.
+  const stored = await saveSubmission(deps.store, {
+    id: guard.submissionId ?? crypto.randomUUID(),
+    kind: "application",
+    receivedAt: new Date().toISOString(),
+    data: { ...parsed.data, roleTitle: getJob(parsed.data.role)?.title ?? parsed.data.role },
+  });
+  let emailed: Awaited<ReturnType<typeof sendEmail>> | null = null;
+  if (emailConfigured) {
+    const { subject, html, text } = buildApplicationEmail(parsed.data);
+    emailed = await sendEmail({ to: deps.env.hiringTo, replyTo: parsed.data.email, subject, html, text }, deps.env, deps.fetchImpl, deps.smtpSender);
   }
 
+  const failures = [stored, emailed].filter((r) => r && !r.ok).map((r) => r!.detail ?? "error");
+  if (failures.length) log({ outcome: "delivery_failure", failures, role: parsed.data.role });
+  if (!stored?.ok && !emailed?.ok) return { httpStatus: 502, body: { status: "error" } };
+
   delivered.add(guard.submissionId);
-  log({ outcome: "sent", role: parsed.data.role });
+  log({ outcome: "sent", role: parsed.data.role, channels: [stored?.ok && "store", emailed?.ok && "email"].filter(Boolean) });
+  if (!emailed?.ok) return { httpStatus: 200, body: { status: "sent" } };
 
   const roleTitle = getJob(parsed.data.role)?.title ?? parsed.data.role;
   const confirmation = await sendConfirmation(

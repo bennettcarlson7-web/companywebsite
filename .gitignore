@@ -36,6 +36,9 @@ yarn-error.log*
 
 # playwright
 /test-results/
+
+# saved form submissions (candidate and client personal data) — never commit
+/.data/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
