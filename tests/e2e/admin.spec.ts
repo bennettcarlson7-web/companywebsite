@@ -144,7 +144,8 @@ test.describe("admin: roles", () => {
     await page.getByLabel(/^What we're looking for/).fill("Experience testing web applications");
     await page.getByLabel(/^Key skills/).fill("Playwright, Test planning");
     await page.getByRole("button", { name: "Post role" }).click();
-    await expect(page).toHaveURL(/\/admin\/roles\?saved=/);
+    // Generous wait: saving revalidates the careers pages, which is slow while the parallel suite loads the machine.
+    await expect(page).toHaveURL(/\/admin\/roles\?saved=/, { timeout: 15_000 });
     const slug = decodeURIComponent(new URL(page.url()).searchParams.get("saved")!);
     expect(slug).toMatch(/^qa-analyst-/);
     const card = page.getByRole("listitem").filter({ hasText: title });

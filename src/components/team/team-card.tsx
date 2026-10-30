@@ -4,16 +4,26 @@ import { initialsOf, type TeamMember } from "@/content/team";
 import { cn } from "@/lib/utils";
 
 /** Initials avatar. A real, approved portrait replaces it only when `member.photo` is set. */
-export function TeamAvatar({ member, size = "lg" }: { member: TeamMember; size?: "md" | "lg" }) {
-  const dims = size === "lg" ? "size-16 text-xl" : "size-12 text-base";
+export function TeamAvatar({
+  member,
+  size = "lg",
+  round = false,
+}: {
+  member: TeamMember;
+  size?: "md" | "lg" | "xl";
+  round?: boolean;
+}) {
+  const dims = { md: "size-12 text-base", lg: "size-16 text-xl", xl: "size-20 text-2xl" }[size];
+  const px = { md: 48, lg: 64, xl: 80 }[size];
+  const shape = round ? "rounded-full" : "rounded-2xl";
   if (member.photo) {
     return (
       <Image
         src={member.photo}
         alt={`Portrait of ${member.name}`}
-        width={size === "lg" ? 64 : 48}
-        height={size === "lg" ? 64 : 48}
-        className={cn("rounded-2xl object-cover", dims)}
+        width={px}
+        height={px}
+        className={cn("object-cover", shape, dims)}
       />
     );
   }
@@ -21,7 +31,8 @@ export function TeamAvatar({ member, size = "lg" }: { member: TeamMember; size?:
     <span
       aria-hidden="true"
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-2xl font-semibold tracking-wide text-white",
+        "inline-flex shrink-0 items-center justify-center font-semibold tracking-wide text-white",
+        shape,
         dims,
         member.group === "leadership"
           ? "bg-gradient-to-br from-navy-800 to-cobalt-700"

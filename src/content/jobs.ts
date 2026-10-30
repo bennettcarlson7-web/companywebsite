@@ -11,8 +11,9 @@ import type { FAQ } from "@/types/content";
  * this pay is below several U.S. state minimum wages and the federal overtime-exempt salary threshold.
  * PROPOSED (owner review): summaries, responsibilities, signals, and skill tags. These are editorial job
  * descriptions, not statements about current employees.
- * UNKNOWN: work authorization, how workers in each country are engaged (local entity, employer of record, or
- * contractor), and the hiring process. Never invent these.
+ * CONFIRMED (Oct 31, 2026): the hiring process and working style in `hiringSteps` / `workingStyle` below.
+ * UNKNOWN: work authorization and how workers in each country are engaged (local entity, employer of record, or
+ * contractor). Never invent these.
  */
 export type Job = {
   slug: string;
@@ -206,11 +207,64 @@ export const engineeringValues = [
   { title: "Clear communication", body: "We write things down, share context generously, and raise risks early." },
 ];
 
+/**
+ * Careers page copy, supplied by the business owner (Oct 31, 2026; no team-size number): remote and flexible working with
+ * required U.S.-hours overlap, and the hiring process (apply → one interview with a live exercise → decision).
+ */
+export const careersPerks = [
+  {
+    title: "Small Team, Meaningful Impact",
+    body: "As a small team, your ideas and contributions don't get lost in layers of management.",
+  },
+  {
+    title: "Flexibility That Works",
+    body: "We work remotely with flexible schedules and shared collaboration time during U.S. working hours.",
+  },
+  {
+    title: "Take Ownership",
+    body: "We value people who think independently, communicate openly, and take responsibility for the work they do.",
+  },
+  {
+    title: "Grow With Us",
+    body: "As our team grows, we want people who are excited to learn, contribute new ideas, and help shape what we build next.",
+  },
+];
+
+export const workingStyle = [
+  { title: "Fully Remote", body: "Work from anywhere" },
+  { title: "Flexible Hours", body: "Manage your own schedule" },
+  { title: "U.S. Overlap", body: "Collaborate during U.S. working hours" },
+];
+
+export const hiringSteps = [
+  { title: "Apply", body: "Find a role that fits your experience and submit your application." },
+  {
+    title: "One Interview",
+    body: "A friendly conversation about your background and problem-solving approach, plus a practical live exercise relevant to the role.",
+  },
+  { title: "Next Steps", body: "We'll review the results and communicate our decision." },
+];
+
 export const candidateFaqs: FAQ[] = [
   {
-    question: "Where is the role based, and what are the employment terms?",
+    question: "What do the roles pay, and who can apply?",
     answer:
-      "Our current roles are fully remote and open to candidates anywhere in the world except the United States. They are full-time, paid USD 2,000 per month. Other details, such as how the engagement is set up in your country, are discussed during the hiring process — ask in your application if anything is a deal-breaker.",
+      "Our current roles are full-time and paid USD 2,000 per month. They are fully remote and open to candidates anywhere in the world except the United States. Each role page lists its own terms.",
+  },
+  {
+    question: "What are the working hours?",
+    answer:
+      "Schedules are flexible, with required overlap during U.S. working hours so the team can collaborate. We'll talk through how that fits your time zone during the interview.",
+  },
+  {
+    question: "How is the contract set up?",
+    answer:
+      "How the engagement is set up in your country is discussed during the hiring process, and all terms are confirmed in writing before any offer. If anything is a deal-breaker for you, mention it in your application.",
+  },
+  {
+    question: "What does the hiring process look like?",
+    answer:
+      "You apply, then we hold one interview: a conversation about your background, experience, and approach to problems, plus a practical live exercise relevant to the role. After that, we review the results and tell you our decision. No endless interview rounds.",
   },
   {
     question: "What does the application involve?",
@@ -220,7 +274,7 @@ export const candidateFaqs: FAQ[] = [
   {
     question: "Will I hear back?",
     answer:
-      "A person on our team reads every application. We aim to reply to everyone, but we can't promise a timeline or an interview.",
+      "A person on our team reads every application. If your experience fits the role, we'll invite you to the interview. We aim to reply to everyone, but we can't promise a timeline.",
   },
   {
     question: "Can I apply if I don't meet every listed qualification?",

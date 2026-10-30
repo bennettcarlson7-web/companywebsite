@@ -109,9 +109,26 @@ test.describe("business facts as rendered", () => {
 
   test("careers lists three roles and never says hiring is closed", async ({ page }) => {
     await page.goto("/careers");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Help build what's next.");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Build Meaningful Products. Work From Anywhere.");
     await expect(page.getByText(/no open roles/i)).toHaveCount(0);
     for (const [, title] of JOBS) await expect(page.getByRole("heading", { name: title, level: 3 })).toBeVisible();
+  });
+
+  test("careers explains why to join, how we work, the hiring process, and the team", async ({ page }) => {
+    await page.goto("/careers");
+    for (const heading of ["Open Positions", "Why Join NextMade?", "How We Work", "Our Hiring Process", "Meet Our Team", "Frequently Asked Questions", "Explore Open Positions"]) {
+      await expect(page.getByRole("heading", { level: 2, name: heading, exact: true })).toBeVisible();
+    }
+    const steps = page.getByRole("list").filter({ has: page.getByRole("heading", { name: /Step 1: Apply/ }) }).getByRole("listitem");
+    await expect(steps).toHaveCount(3);
+    await expect(page.getByRole("region", { name: "Our Hiring Process" })).toContainText(/no endless interview rounds/i);
+    for (const [name, role] of TEAM) {
+      const member = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name, level: 3 }) });
+      await expect(member).toContainText(role);
+    }
+    await expect(page.locator("main img")).toHaveCount(0);
+    await page.getByRole("link", { name: "View Open Positions" }).last().click();
+    await expect(page).toHaveURL(/#open-roles$/);
   });
 
   test("main content never prints the email address; email links and the footer still reach the inbox", async ({ page }) => {
