@@ -191,6 +191,9 @@ export const seedJobs: Job[] = [
 export const defaultJobFacts = confirmedFacts;
 export const defaultJobPosting = notPostable;
 
+/** True when a role's location says it isn't open to candidates in the United States. */
+export const excludesUS = (job: Pick<Job, "facts">) => /outside the United States/i.test(job.facts.location ?? "");
+
 export function applyHref(slug?: string): string {
   return slug ? `/careers/apply?role=${encodeURIComponent(slug)}` : "/careers/apply";
 }
@@ -249,7 +252,7 @@ export const candidateFaqs: FAQ[] = [
   {
     question: "What do the roles pay, and who can apply?",
     answer:
-      "Our current roles are full-time and paid USD 2,000 per month. They are fully remote and open to candidates anywhere in the world except the United States. Each role page lists its own terms.",
+      "Pay and location eligibility are set for each role and shown on its card and role page — for example, whether it's open to candidates in your country. Our roles are remote and full-time unless the role page says otherwise.",
   },
   {
     question: "What are the working hours?",

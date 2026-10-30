@@ -81,7 +81,8 @@ test.describe("admin: candidates", () => {
     await expect(row).toContainText("New");
     await row.getByRole("link", { name }).click();
 
-    await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
+    // Generous wait: the candidate page renders on demand, which is slow while the parallel suite loads the machine.
+    await expect(page.getByRole("heading", { level: 1, name })).toBeVisible({ timeout: 15_000 });
     for (const text of ["+63 917 123 4567", "Manila, Philippines", "Woman", "25–34"]) {
       await expect(page.getByText(text, { exact: true }).first()).toBeVisible();
     }

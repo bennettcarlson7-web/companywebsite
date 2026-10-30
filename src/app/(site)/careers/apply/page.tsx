@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getOpenJobs } from "@/lib/data/jobs";
+import { excludesUS } from "@/content/jobs";
 import { emailSubjects, getCareersEmail, mailtoHref, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
 import { Container, Section } from "@/components/ui/primitives";
@@ -20,7 +21,7 @@ export const metadata = {
 
 export default async function ApplyPage() {
   const jobs = await getOpenJobs();
-  const roles = jobs.map((j) => ({ slug: j.slug, title: j.title }));
+  const roles = jobs.map((j) => ({ slug: j.slug, title: j.title, excludesUS: excludesUS(j) }));
   return (
     <>
       <section className="border-b border-line bg-gradient-to-b from-mist to-white">

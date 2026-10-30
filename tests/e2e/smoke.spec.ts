@@ -106,7 +106,7 @@ test.describe("business facts as rendered", () => {
     await expect(page.getByRole("link", { name: "Tell Us About Your Project" }).first()).toHaveAttribute("href", "/contact");
     await expect(page.getByText("Antonio Ortiz")).toBeVisible();
     await expect(page.getByText("Ricky Lee Sprouse")).toBeVisible();
-    await expect(page.getByText(/explore open roles in ai\/ml, data engineering, and recruiting/i)).toBeVisible();
+    await expect(page.getByText(/we're hiring for remote roles/i)).toBeVisible();
     await expect(page.getByText("Booking confirmed")).toHaveCount(0);
   });
 

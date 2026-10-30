@@ -6,8 +6,12 @@ import { CandidateApplicationForm } from "@/components/forms/candidate-applicati
 import { countries } from "@/lib/countries";
 import { seedJobs } from "@/content/jobs";
 
-const roles = seedJobs.map((j) => ({ slug: j.slug, title: j.title }));
 import { isActivePath } from "@/components/layout/nav-links";
+
+const roles = seedJobs.map((j) => ({ slug: j.slug, title: j.title }));
+
+// These tests type whole forms like a person would; give them headroom when the full suite loads the machine.
+vi.setConfig({ testTimeout: 20_000 });
 
 const EMAIL = "hello@nextmadelabs.com";
 const CAREERS_EMAIL = "careers@nextmadelabs.com";
@@ -154,6 +158,21 @@ describe("CandidateApplicationForm", () => {
     // The résumé file travels with the application as base64, starting with the PDF signature.
     expect(sentBody(fetchFn).payload).toMatchObject({ phone: "+234 803 555 0142", city: "Lagos", country: "NG", gender: "", ageRange: "" });
     expect(sentBody(fetchFn).payload.resume).toMatchObject({ name: "Sam Okafor CV.pdf", data: expect.stringMatching(/^JVBERi/) });
+  });
+
+  it("notes U.S. eligibility only for roles that exclude the United States", async () => {
+    const user = userEvent.setup();
+    const mixed = [
+      { slug: "remote-intl", title: "International Role", excludesUS: true },
+      { slug: "americas", title: "Americas Role", excludesUS: false },
+    ];
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={mixed} />);
+    await user.selectOptions(screen.getByLabelText(/^country/i), "US");
+    expect(screen.queryByText(/open to candidates based outside the United States/i)).not.toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText(/^role/i), "remote-intl");
+    expect(screen.getByText("Please note: this role is open to candidates based outside the United States.")).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText(/^role/i), "americas");
+    expect(screen.queryByText(/open to candidates based outside the United States/i)).not.toBeInTheDocument();
   });
 
   it("requires a résumé, offers an optional video link with the recording guidance, and no written introduction", async () => {

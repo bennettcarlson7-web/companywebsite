@@ -54,7 +54,8 @@ const fieldLabels: Record<ApplicationField, string> = {
 const VIDEO_HINT =
   "Please record a 1–2 minute video introducing yourself, highlighting your professional background, relevant experience, and why you're interested in joining our team.";
 
-export type RoleOption = { slug: string; title: string };
+/** `excludesUS`: the role isn't open to candidates in the United States (shown as a note if they pick the U.S.). */
+export type RoleOption = { slug: string; title: string; excludesUS?: boolean };
 
 const titleOf = (roles: RoleOption[], slug?: string) => roles.find((r) => r.slug === slug)?.title;
 
@@ -137,6 +138,14 @@ export function CandidateApplicationForm({
   const [submitted, setSubmitted] = useState<Application | null>(null);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [country, setCountry] = useState("");
+  // U.S. eligibility depends on the role: note it for the chosen role, or for all roles if none is chosen yet.
+  const chosen = roles.find((r) => r.slug === role);
+  const usNote =
+    country !== "US"
+      ? null
+      : chosen
+        ? chosen.excludesUS && "Please note: this role is open to candidates based outside the United States."
+        : roles.length > 0 && roles.every((r) => r.excludesUS) && "Please note: our current roles are open to candidates based outside the United States.";
   const resumeInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -288,7 +297,7 @@ export function CandidateApplicationForm({
                 autoComplete="country"
                 value={country}
                 onChange={(e) => setCountry(e.currentTarget.value)}
-                {...inputProps(fid("country"), errors.country, country === "US" ? fid("country-note") : undefined)}
+                {...inputProps(fid("country"), errors.country, usNote ? fid("country-note") : undefined)}
               >
                 <option value="" disabled>
                   Choose a country…
@@ -299,9 +308,9 @@ export function CandidateApplicationForm({
                   </option>
                 ))}
               </select>
-              {country === "US" && (
+              {usNote && (
                 <p id={fid("country-note")} className="mt-2 text-sm text-warning-800">
-                  Please note: our current roles are open to candidates based outside the United States.
+                  {usNote}
                 </p>
               )}
             </Field>

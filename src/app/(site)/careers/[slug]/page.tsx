@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { applyHref, engineeringValues } from "@/content/jobs";
+import { applyHref, engineeringValues, excludesUS } from "@/content/jobs";
 import { getAllJobs, getJobBySlug, isOpen } from "@/lib/data/jobs";
 import { buildMetadata, JsonLd, jobPostingJsonLd } from "@/lib/seo";
 import { ButtonLink } from "@/components/ui/button";
@@ -129,7 +129,7 @@ export default async function JobPage({ params }: PageProps<"/careers/[slug]">) 
 
             <p className="rounded-xl bg-paper p-4 text-sm leading-relaxed text-slate-600 ring-1 ring-line">
               This description reflects our current thinking about the role and may be refined as we talk with
-              candidates.{job.facts.location?.includes("outside the United States") ? " This role is open to candidates outside the United States." : ""}{" "}
+              candidates.{excludesUS(job) ? " This role is open to candidates outside the United States." : ""}{" "}
               All terms are confirmed in writing before any offer.
             </p>
           </article>

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ArrowRight, BarChart3, Clock, Globe, Rocket, Users, Zap, type LucideIcon } from "lucide-react";
-import { candidateFaqs, careersPerks, hiringSteps, workingStyle } from "@/content/jobs";
+import { candidateFaqs, careersPerks, excludesUS, hiringSteps, workingStyle } from "@/content/jobs";
 import { getTeam } from "@/content/team";
 import { getOpenJobs } from "@/lib/data/jobs";
 import { emailSubjects, getCareersEmail, mailtoHref, siteConfig } from "@/lib/site-config";
@@ -65,7 +65,7 @@ export default async function CareersPage() {
   const jobs = await getOpenJobs();
   const team = getTeam();
   const careersMail = mailtoHref(getCareersEmail(), emailSubjects.careersQuestion);
-  const allOutsideUS = jobs.length > 0 && jobs.every((j) => j.facts.location?.includes("outside the United States"));
+  const allOutsideUS = jobs.length > 0 && jobs.every(excludesUS);
 
   return (
     <>

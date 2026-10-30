@@ -90,8 +90,10 @@ export default function PrivacyPage() {
         <li>Vercel — website hosting and cookieless, aggregated website analytics.</li>
         <li>Upstash — secure storage of submitted inquiries and applications, so nothing is lost if email is delayed.</li>
         <li>Cloudflare — domain name services and routing of email sent to our addresses.</li>
-        <li>Resend — sending form submissions to our team and confirmations back to you.</li>
-        <li>Google (Gmail) — the mailbox where our team reads and answers email.</li>
+        <li>
+          Google (Gmail) — the mailbox where our team reads and answers email, and the service that sends form
+          submissions to our team and confirmations back to you.
+        </li>
       </ul>
       <p>We will update this list before adding a provider that receives personal information.</p>
 

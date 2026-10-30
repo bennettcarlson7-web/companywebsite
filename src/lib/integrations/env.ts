@@ -11,7 +11,10 @@ import { company } from "@/lib/site-config";
  */
 
 export type IntakeEnv = {
-  /** Resend API key. Preferred provider: sends as the company domain once nextmadelabs.com is verified in Resend. */
+  /**
+   * Resend API key. Preferred provider: sends as the company domain once nextmadelabs.com is verified in Resend.
+   * Before turning it on in production, add Resend back to the Privacy Policy's service providers.
+   */
   resendApiKey?: string;
   /** SMTP through an existing mailbox. Used only when Resend isn't configured. */
   smtp?: { host: string; port: number; user: string; password: string };

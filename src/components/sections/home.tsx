@@ -162,9 +162,9 @@ export function FeaturedWork() {
       <Container>
         <SectionHeader
           id="work-heading"
-          eyebrow="Featured work"
-          title="From ideas to real-world impact"
-          description="We're a new studio, so instead of borrowed logos we're sharing illustrative concept projects that show how we approach problems. Real case studies will appear here as client work is approved for publication."
+          eyebrow="Concept projects"
+          title="How we approach real problems"
+          description="Alongside our own products, these illustrative concept projects show how we think through common business problems. Real client case studies will appear here once they're approved for publication."
           action={<TextLink href="/work">See all work</TextLink>}
         />
         <Reveal>
@@ -292,7 +292,7 @@ export function RecruitingAnnouncement() {
               <h2 id="hiring-heading" className="text-base font-semibold">
                 We&apos;re growing.
               </h2>
-              <p className="text-sm text-slate-600">Explore open roles in AI/ML, data engineering, and recruiting.</p>
+              <p className="text-sm text-slate-600">We&apos;re hiring for remote roles — see what&apos;s open and how we work.</p>
             </div>
           </div>
           <TextLink href="/careers" className="shrink-0">

@@ -69,22 +69,13 @@ export default function WorkPage() {
               ))}
             </ul>
           </Reveal>
-          <div className="mt-14 rounded-2xl bg-mist p-8 text-center ring-1 ring-cobalt-100">
-            <h2 className="text-xl font-semibold">Want to see how we&apos;d approach your project?</h2>
-            <p className="mx-auto mt-2 max-w-xl text-slate-600">
-              Share a short description and we&apos;ll walk you through how we would scope it, what we&apos;d build first,
-              and the trade-offs worth considering.
-            </p>
-            <div className="mt-6">
-              <ButtonLink href={siteConfig.cta.primary.href} arrow>
-                {siteConfig.cta.primary.label}
-              </ButtonLink>
-            </div>
-          </div>
         </Container>
       </Section>
 
-      <CTASection />
+      <CTASection
+        title="Want to see how we'd approach your project?"
+        body="Share a short description and we'll walk you through how we would scope it, what we'd build first, and the trade-offs worth considering."
+      />
     </>
   );
 }
