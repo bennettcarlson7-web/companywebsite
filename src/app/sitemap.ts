@@ -3,11 +3,12 @@ import { siteConfig } from "@/lib/site-config";
 import { getServices } from "@/content/services";
 import { getProjects } from "@/content/projects";
 import { getArticles } from "@/content/insights";
-import { getJobs } from "@/content/jobs";
+import { getOpenJobs } from "@/lib/data/jobs";
 
 const staticRoutes = ["/", "/services", "/work", "/process", "/about", "/insights", "/careers", "/contact", "/privacy", "/terms"];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const jobs = await getOpenJobs();
   // Without a configured public URL, relative entries are emitted for local inspection only;
   // robots.txt blocks crawling in that state.
   const base = siteConfig.url ?? "";
@@ -22,6 +23,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...getServices().map((s) => entry(`/services/${s.slug}`, undefined, 0.8)),
     ...getProjects().map((p) => entry(`/work/${p.slug}`)),
     ...getArticles().map((a) => entry(`/insights/${a.slug}`, a.updatedAt ?? a.publishedAt, 0.7)),
-    ...getJobs().map((j) => entry(`/careers/${j.slug}`, undefined, 0.6)),
+    ...jobs.map((j) => entry(`/careers/${j.slug}`, j.updatedAt, 0.6)),
   ];
 }

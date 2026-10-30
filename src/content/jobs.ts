@@ -1,6 +1,9 @@
 import type { FAQ } from "@/types/content";
 
 /**
+ * Job content model and the starting roles. Live roles are managed in the admin area and stored in the database
+ * (see src/lib/data/jobs.ts); the roles below are only the initial data.
+ *
  * Roles the business owner confirmed we are recruiting for (Oct 2026).
  *
  * CONFIRMED: the three titles, that recruiting is active, and (Oct 29, 2026) the terms in `confirmedFacts`:
@@ -59,7 +62,11 @@ const notPostable: Job["posting"] = {
   remote: null,
 };
 
-export const jobs: Job[] = [
+/**
+ * Starting data for the job board. Live roles are managed in the admin area (`/admin/roles`) and stored in the
+ * database; read them through `src/lib/data/jobs.ts`, not from here.
+ */
+export const seedJobs: Job[] = [
   {
     slug: "senior-software-engineer-ai-ml",
     title: "Senior Software Engineer — AI/ML",
@@ -179,13 +186,9 @@ export const jobs: Job[] = [
   },
 ];
 
-export function getJobs(): Job[] {
-  return jobs;
-}
-
-export function getJob(slug: string): Job | undefined {
-  return jobs.find((j) => j.slug === slug);
-}
+/** Owner-confirmed defaults offered when posting a new role in the admin. */
+export const defaultJobFacts = confirmedFacts;
+export const defaultJobPosting = notPostable;
 
 export function applyHref(slug?: string): string {
   return slug ? `/careers/apply?role=${encodeURIComponent(slug)}` : "/careers/apply";

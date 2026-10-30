@@ -4,6 +4,7 @@ import { readIntakeEnv } from "@/lib/integrations/env";
 import { MemoryRateLimiter } from "@/lib/integrations/rate-limit";
 import { DeliveredSubmissions, type SubmissionRequest } from "@/lib/integrations/submission-guard";
 import { applicationSchema } from "@/lib/validation/job-application";
+import { seedManagedJobs } from "@/lib/data/jobs";
 import { samplePdf, sampleUuid, validApplication, validInquiry } from "./fixtures";
 
 const configured = readIntakeEnv({
@@ -93,6 +94,24 @@ describe("handleApplication", () => {
     expect(res.body).toEqual({ status: "error" });
   });
 
+  it("only accepts roles that are currently open in the live job list", async () => {
+    const jobs = seedManagedJobs().map((j) => (j.slug === validApplication.role ? { ...j, status: "closed" as const } : j));
+    const withdrawn = await handleApplication(request(envelope()), { ...deps(configured, okFetch() as unknown as typeof fetch), loadJobs: async () => jobs });
+    expect(withdrawn).toMatchObject({ httpStatus: 422, body: { status: "invalid", fieldErrors: { role: expect.stringMatching(/no longer accepting/) } } });
+
+    const unknown = await handleApplication(request(envelope({ ...validApplication, role: "chief-wizard" })), deps(configured, okFetch() as unknown as typeof fetch));
+    expect(unknown).toMatchObject({ httpStatus: 422, body: { fieldErrors: { role: expect.stringMatching(/choose the role/) } } });
+
+    const posted = [...seedManagedJobs(), { ...seedManagedJobs()[0]!, slug: "product-designer", title: "Product Designer" }];
+    const fetchImpl = okFetch();
+    const res = await handleApplication(request(envelope({ ...validApplication, role: "product-designer" })), {
+      ...deps(configured, fetchImpl as unknown as typeof fetch),
+      loadJobs: async () => posted,
+    });
+    expect(res.body).toEqual({ status: "sent" });
+    expect(JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body)).subject).toContain("Product Designer");
+  });
+
   it("rejects a project-inquiry payload sent to the application endpoint", async () => {
     const res = await handleApplication(request(envelope(validInquiry)), deps(configured, okFetch() as unknown as typeof fetch));
     expect(res.httpStatus).toBe(422);
@@ -139,7 +158,7 @@ describe("buildApplicationEmail", () => {
       name: "<b>Sam</b>",
       videoUrl: `https://evil.example/"><script>alert(1)</script>`,
     });
-    const { html, text } = buildApplicationEmail(app);
+    const { html, text } = buildApplicationEmail(app, "Senior Software Engineer — Data Engineering");
     expect(html).not.toContain("<a href");
     expect(html).not.toContain("<script>");
     expect(html).not.toContain("<b>Sam</b>");

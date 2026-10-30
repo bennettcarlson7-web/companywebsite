@@ -164,6 +164,13 @@ Full owner steps, including the DNS records: **[docs/EMAIL_SETUP.md](docs/EMAIL_
 
 If nothing is configured, or the provider rejects a message, the visitor sees "we couldn't send your
 inquiry/application from the website" with a one-click prefilled email instead. Never a false confirmation.
+
+## Admin area
+
+`/admin` is a private area for managing candidates (status, notes, résumé download, deletion) and job postings
+(post, edit, withdraw, re-open). Admins sign in with a one-time code sent to their email. Setup and usage:
+[docs/ADMIN.md](docs/ADMIN.md).
+
 ## SEO
 
 - Per-page metadata via `buildMetadata()`, title template, Open Graph/Twitter cards, and a generated default OG

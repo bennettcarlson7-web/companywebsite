@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { ProjectInquiryForm } from "@/components/forms/project-inquiry-form";
 import { CandidateApplicationForm } from "@/components/forms/candidate-application-form";
 import { countries } from "@/lib/countries";
+import { seedJobs } from "@/content/jobs";
+
+const roles = seedJobs.map((j) => ({ slug: j.slug, title: j.title }));
 import { isActivePath } from "@/components/layout/nav-links";
 
 const EMAIL = "hello@nextmadelabs.com";
@@ -115,20 +118,20 @@ describe("CandidateApplicationForm", () => {
 
   it("preselects the role from ?role= in the URL", () => {
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={roles} />);
     expect(screen.getByLabelText(/^role/i)).toHaveValue("talent-recruiter");
   });
 
   it("ignores unknown roles in the URL", () => {
     window.history.replaceState({}, "", "/careers/apply?role=chief-wizard");
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={roles} />);
     expect(screen.getByLabelText(/^role/i)).toHaveValue("");
   });
 
   it("validates required fields and link safety before sending", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={roles} />);
     await user.type(screen.getByLabelText(/portfolio or github/i), "javascript:alert(1)");
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     const summary = await screen.findByRole("alert");
@@ -141,7 +144,7 @@ describe("CandidateApplicationForm", () => {
     window.history.replaceState({}, "", "/careers/apply?role=senior-software-engineer-ai-ml");
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={roles} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByText(/we received your application/i)).toBeInTheDocument();
@@ -156,7 +159,7 @@ describe("CandidateApplicationForm", () => {
   it("asks for a résumé and a video link, with the recording guidance, and no written introduction", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={roles} />);
     expect(screen.getByText(/please record a 1–2 minute video introducing yourself/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/introduce yourself/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/video link/i)).toBeRequired();
@@ -177,7 +180,7 @@ describe("CandidateApplicationForm", () => {
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
     mockFetch(503, { status: "unconfigured" });
     const user = userEvent.setup();
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={roles} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByRole("heading", { name: /couldn.t send your application/i })).toBeInTheDocument();
@@ -190,7 +193,7 @@ describe("CandidateApplicationForm", () => {
     mockFetch(502, { status: "error" });
     const user = userEvent.setup();
     window.history.replaceState({}, "", "/careers/apply?role=talent-recruiter");
-    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} />);
+    render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={roles} />);
     await fill(user);
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     expect(await screen.findByText(/your application was not sent/i)).toBeInTheDocument();

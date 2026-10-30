@@ -1,4 +1,5 @@
-import { candidateFaqs, engineeringValues, getJobs } from "@/content/jobs";
+import { candidateFaqs, engineeringValues } from "@/content/jobs";
+import { getOpenJobs } from "@/lib/data/jobs";
 import { emailSubjects, getCareersEmail, mailtoHref, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
 import { ButtonLink } from "@/components/ui/button";
@@ -10,12 +11,12 @@ import { JobCard } from "@/components/careers/job-card";
 
 export const metadata = buildMetadata({
   title: "Careers — Help Build What's Next",
-  description: `${siteConfig.name} is recruiting a Senior Software Engineer (AI/ML), a Senior Software Engineer (Data Engineering), and a Talent Recruiter. Explore the roles and apply.`,
+  description: `Explore the roles ${siteConfig.name} is recruiting for — remote, full-time engineering and operations positions — and apply in a few minutes.`,
   path: "/careers",
 });
 
-export default function CareersPage() {
-  const jobs = getJobs();
+export default async function CareersPage() {
+  const jobs = await getOpenJobs();
   return (
     <>
       <PageHero
@@ -35,20 +36,30 @@ export default function CareersPage() {
           <div id="open-roles" className="scroll-mt-24">
             <SectionHeader
               id="roles-heading"
-              eyebrow={`${jobs.length} open roles`}
+              eyebrow={jobs.length === 1 ? "1 open role" : `${jobs.length} open roles`}
               title="Roles we're recruiting for"
               description="Each role has its own page with the details. Applying takes a few minutes — your résumé and a short introduction video are all we ask for."
             />
           </div>
-          <Reveal>
-            <ul className="mt-10 grid gap-6 lg:grid-cols-3">
-              {jobs.map((job) => (
-                <li key={job.slug}>
-                  <JobCard job={job} />
-                </li>
-              ))}
-            </ul>
-          </Reveal>
+          {jobs.length > 0 ? (
+            <Reveal>
+              <ul className="mt-10 grid gap-6 lg:grid-cols-3">
+                {jobs.map((job) => (
+                  <li key={job.slug}>
+                    <JobCard job={job} />
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+          ) : (
+            <p className="mt-10 rounded-2xl bg-paper p-6 text-slate-700 ring-1 ring-line">
+              We don&apos;t have open roles right now. Check back soon, or{" "}
+              <a href={mailtoHref(getCareersEmail(), emailSubjects.careersQuestion)} className="font-semibold text-cobalt-700 underline">
+                email our hiring team
+              </a>{" "}
+              to introduce yourself.
+            </p>
+          )}
         </Container>
       </Section>
 

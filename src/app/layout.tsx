@@ -2,9 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/site-config";
-import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/lib/seo";
-import { Header, SkipLink } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import "@/styles/globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"], display: "swap" });
@@ -39,14 +36,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-US" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="flex min-h-dvh flex-col">
-        <SkipLink />
-        <Header />
-        <main id="main" tabIndex={-1} className="flex-1 outline-none">
-          {children}
-        </main>
-        <Footer />
-        <JsonLd data={organizationJsonLd()} />
-        <JsonLd data={websiteJsonLd()} />
+        {/* Public pages get their header/footer from app/(site)/layout.tsx; /admin has its own layout. */}
+        {children}
         {/* Vercel Web Analytics: cookieless, aggregated page views. Inactive outside Vercel deployments. */}
         <Analytics />
       </body>

@@ -38,6 +38,10 @@ export default defineConfig({
       KV_REST_API_TOKEN: "",
       SUBMISSIONS_DIR: "test-results/e2e-submissions",
       INTAKE_RATE_LIMIT_MAX: "200",
+      // Test-only admin identity and signing key (not used anywhere else). With email disabled the sign-in form
+      // can't send codes, so admin tests create a signed session cookie directly (see tests/e2e/admin.spec.ts).
+      ADMIN_EMAILS: "admin@e2e.test",
+      ADMIN_SESSION_SECRET: "e2e-only-admin-session-secret-not-for-production",
     },
   },
 });

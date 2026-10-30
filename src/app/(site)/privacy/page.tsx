@@ -36,7 +36,8 @@ export default function PrivacyPage() {
         you upload, a link to your introduction video, and an optional portfolio or GitHub link. You may also choose to
         share your gender and age range; both are voluntary, &ldquo;Decline to self-identify&rdquo; is always
         available, and these answers are not used to make hiring decisions. If you answer, they are kept with your
-        application. Your résumé
+        application. While we review it, our hiring team may record its status and brief job-related notes, which are
+        kept and deleted together with your application. Your résumé
         is stored with your application and sent to our hiring inbox by email. If you share a link, the content behind
         it stays under your control; you can revoke access at any time.
       </p>

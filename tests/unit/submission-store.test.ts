@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -7,7 +7,8 @@ import { handleInquiry } from "@/lib/integrations/handle-inquiry";
 import { readIntakeEnv } from "@/lib/integrations/env";
 import { MemoryRateLimiter } from "@/lib/integrations/rate-limit";
 import { DeliveredSubmissions } from "@/lib/integrations/submission-guard";
-import { createSubmissionStore, FileSubmissionStore, UpstashSubmissionStore, type SubmissionStore } from "@/lib/integrations/submission-store";
+import { createSubmissionStore, RedisSubmissionStore, submissionKeys, type SubmissionStore } from "@/lib/integrations/submission-store";
+import { LocalRedis, UpstashRedis } from "@/lib/data/redis";
 import { sampleUuid, validApplication, validInquiry } from "./fixtures";
 
 const req = (payload: object) => ({
@@ -52,10 +53,20 @@ describe("submission store configuration", () => {
 describe("one-click submissions without email", () => {
   it("receives an application by saving it — no email provider needed", async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), "nm-subs-"));
-    const res = await handleApplication(req(validApplication), deps(noEmail, new FileSubmissionStore(dir)));
+    const file = path.join(dir, "local-redis.json");
+    const res = await handleApplication(req(validApplication), deps(noEmail, new RedisSubmissionStore(new LocalRedis(file))));
     expect(res).toMatchObject({ httpStatus: 200, body: { status: "sent" } });
-    const [line] = (await readFile(path.join(dir, "applications.jsonl"), "utf8")).trim().split("\n");
-    const saved = JSON.parse(line!);
+    // Read back through a fresh instance: the record is on disk, not just in memory.
+    const reader = new LocalRedis(file);
+    const [raw, summaryRaw, ids] = await reader.exec([
+      ["GET", submissionKeys.record("application", sampleUuid)],
+      ["GET", submissionKeys.summary("application", sampleUuid)],
+      ["ZRANGE", submissionKeys.index("application"), 0, -1],
+    ]);
+    const saved = JSON.parse(String(raw));
+    expect(ids).toEqual([sampleUuid]);
+    // The summary used by the admin list leaves out the file contents.
+    expect(JSON.parse(String(summaryRaw)).data.resume).toEqual({ filename: "Sam Okafor CV.pdf", contentType: "application/pdf", size: expect.any(Number) });
     expect(saved).toMatchObject({ id: sampleUuid, kind: "application" });
     expect(saved.data).toMatchObject({ name: "Sam Okafor", email: "sam@example.com", roleTitle: "Senior Software Engineer — Data Engineering" });
     expect(saved.data.videoUrl).toBe(validApplication.videoUrl);
@@ -66,9 +77,11 @@ describe("one-click submissions without email", () => {
 
   it("receives an inquiry by saving it", async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), "nm-subs-"));
-    const res = await handleInquiry(req(validInquiry), deps(noEmail, new FileSubmissionStore(dir)));
+    const redis = new LocalRedis(path.join(dir, "local-redis.json"));
+    const res = await handleInquiry(req(validInquiry), deps(noEmail, new RedisSubmissionStore(redis)));
     expect(res.body).toEqual({ status: "sent" });
-    const saved = JSON.parse((await readFile(path.join(dir, "inquiries.jsonl"), "utf8")).trim());
+    const [raw] = await redis.exec([["GET", submissionKeys.record("inquiry", sampleUuid)]]);
+    const saved = JSON.parse(String(raw));
     expect(saved.data.description).toBe(validInquiry.description);
   });
 
@@ -76,7 +89,7 @@ describe("one-click submissions without email", () => {
     dir = await mkdtemp(path.join(os.tmpdir(), "nm-subs-"));
     const emailEnv = readIntakeEnv({ RESEND_API_KEY: "re_test" });
     const failFetch = vi.fn(async () => new Response("{}", { status: 500 }));
-    expect((await handleApplication(req(validApplication), deps(emailEnv, new FileSubmissionStore(dir), failFetch as unknown as typeof fetch))).body).toEqual({ status: "sent" });
+    expect((await handleApplication(req(validApplication), deps(emailEnv, new RedisSubmissionStore(new LocalRedis(path.join(dir, "local-redis.json"))), failFetch as unknown as typeof fetch))).body).toEqual({ status: "sent" });
     const okFetch = vi.fn(async () => new Response("{}", { status: 200 }));
     const d = deps(emailEnv, failingStore, okFetch as unknown as typeof fetch);
     expect((await handleApplication(req(validApplication), d)).body).toEqual({ status: "sent" });
@@ -107,7 +120,7 @@ describe("local / production parity", () => {
   ])("%s with the same Upstash settings accepts the same inquiry", async (_label, vars) => {
     const env = readIntakeEnv(vars);
     const fetchImpl = upstashOk();
-    const store = new UpstashSubmissionStore(env.upstashUrl!, env.upstashToken!, fetchImpl as unknown as typeof fetch);
+    const store = new RedisSubmissionStore(new UpstashRedis(env.upstashUrl!, env.upstashToken!, fetchImpl as unknown as typeof fetch));
     expect(createSubmissionStore(env)?.name).toBe("upstash");
     const res = await handleInquiry(req(validInquiry), deps(env, store));
     expect(res).toMatchObject({ httpStatus: 200, body: { status: "sent" } });
@@ -125,7 +138,7 @@ describe("local / production parity", () => {
 
   it("returns an error (not success) when the storage provider is down", async () => {
     const down = vi.fn(async () => new Response("unavailable", { status: 503 }));
-    const store = new UpstashSubmissionStore("https://kv.example", "t", down as unknown as typeof fetch);
+    const store = new RedisSubmissionStore(new UpstashRedis("https://kv.example", "t", down as unknown as typeof fetch));
     const d = deps(readIntakeEnv({ VERCEL: "1" }), store);
     const res = await handleInquiry(req(validInquiry), d);
     expect(res).toMatchObject({ httpStatus: 502, body: { status: "error" } });
@@ -149,21 +162,22 @@ describe("setup diagnostics in logs", () => {
 });
 
 describe("Upstash store", () => {
-  it("saves each submission with a retention TTL and indexes it by time", async () => {
-    const fetchImpl = vi.fn(async () => new Response(JSON.stringify([{ result: "OK" }, { result: 1 }]), { status: 200 }));
-    const store = new UpstashSubmissionStore("https://u.example/", "token", fetchImpl as unknown as typeof fetch);
+  it("saves each submission (record + summary) with a retention TTL and indexes it by time", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify([{ result: "OK" }, { result: "OK" }, { result: 1 }]), { status: 200 }));
+    const store = new RedisSubmissionStore(new UpstashRedis("https://u.example/", "token", fetchImpl as unknown as typeof fetch));
     await store.save({ id: sampleUuid, kind: "application", receivedAt: "2026-10-29T12:00:00.000Z", data: { name: "Sam" } });
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://u.example/pipeline");
-    const [set, zadd] = JSON.parse(String(init.body));
+    const [set, summary, zadd] = JSON.parse(String(init.body));
     expect(set.slice(0, 2)).toEqual(["SET", `submission:application:${sampleUuid}`]);
     expect(set[3]).toBe("EX");
+    expect(summary.slice(0, 2)).toEqual(["SET", `submission-summary:application:${sampleUuid}`]);
     expect(zadd).toEqual(["ZADD", "submissions:application", String(Date.parse("2026-10-29T12:00:00.000Z")), sampleUuid]);
   });
 
   it("throws (so the handler can report it) when Upstash rejects the write", async () => {
     const fetchImpl = vi.fn(async () => new Response("{}", { status: 401 }));
-    const store = new UpstashSubmissionStore("https://u.example", "bad", fetchImpl as unknown as typeof fetch);
+    const store = new RedisSubmissionStore(new UpstashRedis("https://u.example", "bad", fetchImpl as unknown as typeof fetch));
     await expect(store.save({ id: sampleUuid, kind: "inquiry", receivedAt: new Date().toISOString(), data: {} })).rejects.toThrow("upstash_401");
   });
 });

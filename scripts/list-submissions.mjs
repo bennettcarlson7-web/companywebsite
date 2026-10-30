@@ -33,15 +33,32 @@ async function fromUpstash(kind) {
   return rows.map((r) => r.result).filter(Boolean).map((s) => JSON.parse(s));
 }
 
+/** Local runs store data in <SUBMISSIONS_DIR>/local-redis.json (same keys as Upstash); older runs used .jsonl files. */
 async function fromFile(kind) {
   const dir = path.resolve(val(process.env.SUBMISSIONS_DIR) ?? ".data/submissions");
-  try {
-    const text = await readFile(path.join(dir, kind === "application" ? "applications.jsonl" : "inquiries.jsonl"), "utf8");
-    return text.split("\n").filter(Boolean).map((l) => JSON.parse(l)).reverse().slice(0, limit);
-  } catch (err) {
-    if (err.code === "ENOENT") return [];
-    throw err;
+  const read = async (file) => {
+    try {
+      return await readFile(path.join(dir, file), "utf8");
+    } catch (err) {
+      if (err.code === "ENOENT") return null;
+      throw err;
+    }
+  };
+  const items = [];
+  const db = await read("local-redis.json");
+  if (db) {
+    const data = JSON.parse(db);
+    const live = (e) => e && (e.e === undefined || e.e > Date.now());
+    const index = data[`submissions:${kind}`];
+    const ids = live(index) ? Object.entries(index.m).sort(([, a], [, b]) => b - a).map(([id]) => id) : [];
+    for (const id of ids) {
+      const rec = data[`submission:${kind}:${id}`];
+      if (live(rec)) items.push(JSON.parse(rec.v));
+    }
   }
+  const legacy = await read(kind === "application" ? "applications.jsonl" : "inquiries.jsonl");
+  if (legacy) items.push(...legacy.split("\n").filter(Boolean).map((l) => JSON.parse(l)).reverse());
+  return items.slice(0, limit);
 }
 
 const source = upstashUrl && upstashToken ? "Upstash" : "local files";

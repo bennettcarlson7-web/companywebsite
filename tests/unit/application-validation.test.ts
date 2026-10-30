@@ -85,11 +85,13 @@ describe("applicationSchema (candidate applications)", () => {
     expect(r.resume.filename.endsWith(".pdf")).toBe(true);
   });
 
-  it("only accepts the three real roles", () => {
-    for (const role of ["senior-software-engineer-ai-ml", "senior-software-engineer-data-engineering", "talent-recruiter"]) {
+  it("accepts well-formed role slugs (whether the role is open is checked on the server)", () => {
+    for (const role of ["senior-software-engineer-ai-ml", "talent-recruiter", "product-designer-2"]) {
       expect(applicationSchema.safeParse({ ...validApplication, role }).success).toBe(true);
     }
-    expect(errorsFor({ ...validApplication, role: "ceo" }).role).toBeDefined();
+    for (const role of ["", "Talent Recruiter", "../admin", "a".repeat(101)]) {
+      expect(errorsFor({ ...validApplication, role }).role).toBeDefined();
+    }
   });
 
   it("rejects unsafe or malformed links", () => {

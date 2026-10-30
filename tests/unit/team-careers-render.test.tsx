@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { getTeam } from "@/content/team";
-import { getJobs } from "@/content/jobs";
+import { seedJobs } from "@/content/jobs";
 import { TeamCard } from "@/components/team/team-card";
 import { JobCard } from "@/components/careers/job-card";
 
@@ -39,12 +39,12 @@ describe("JobCard", () => {
   it("renders the three roles with View Role and Apply links that preselect the role", () => {
     render(
       <>
-        {getJobs().map((j) => (
+        {seedJobs.map((j) => (
           <JobCard key={j.slug} job={j} />
         ))}
       </>,
     );
-    for (const job of getJobs()) {
+    for (const job of seedJobs) {
       const card = within(screen.getByRole("article", { name: job.title }));
       expect(card.getByRole("link", { name: `View Role: ${job.title}` })).toHaveAttribute("href", `/careers/${job.slug}`);
       expect(card.getByRole("link", { name: `Apply for ${job.title}` })).toHaveAttribute("href", `/careers/apply?role=${job.slug}`);

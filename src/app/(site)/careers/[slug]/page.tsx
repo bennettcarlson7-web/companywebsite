@@ -1,33 +1,40 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { applyHref, engineeringValues, getJob, getJobs } from "@/content/jobs";
+import { applyHref, engineeringValues } from "@/content/jobs";
+import { getAllJobs, getJobBySlug, isOpen } from "@/lib/data/jobs";
 import { buildMetadata, JsonLd, jobPostingJsonLd } from "@/lib/seo";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, CheckList, Container, Section } from "@/components/ui/primitives";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { JobFacts } from "@/components/careers/job-card";
 
-// Fully prerendered from generateStaticParams; unknown slugs render the 404 page.
+// Static pages from cached job data. Roles posted later are generated on first visit; admin changes refresh
+// them through the "jobs" cache tag. Unknown slugs render the 404 page.
 export const ensureStatic = "navigation";
 
-export function generateStaticParams() {
-  return getJobs().map((j) => ({ slug: j.slug }));
+export async function generateStaticParams() {
+  return (await getAllJobs()).map((j) => ({ slug: j.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/careers/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const job = getJob(slug);
+  const job = await getJobBySlug(slug);
   if (!job) return {};
-  return buildMetadata({ title: `${job.title} — Careers`, description: job.summary, path: `/careers/${slug}` });
+  return {
+    ...buildMetadata({ title: `${job.title} — Careers`, description: job.summary, path: `/careers/${slug}` }),
+    // A withdrawn role stays reachable for people with the link, but shouldn't be found in search.
+    ...(isOpen(job) ? {} : { robots: { index: false, follow: true } }),
+  };
 }
 
 export default async function JobPage({ params }: PageProps<"/careers/[slug]">) {
   const { slug } = await params;
-  const job = getJob(slug);
+  const job = await getJobBySlug(slug);
   if (!job) notFound();
 
-  const otherJobs = getJobs().filter((j) => j.slug !== job.slug);
+  const open = isOpen(job);
+  const otherJobs = (await getAllJobs()).filter((j) => j.slug !== job.slug && isOpen(j));
 
   return (
     <>
@@ -41,15 +48,22 @@ export default async function JobPage({ params }: PageProps<"/careers/[slug]">) 
           />
           <div className="mt-8 flex flex-wrap gap-2">
             <Badge tone="blue">{job.team}</Badge>
-            <Badge>Actively recruiting</Badge>
+            <Badge>{open ? "Actively recruiting" : "Closed"}</Badge>
           </div>
           <h1 className="mt-4 max-w-3xl text-4xl leading-[1.1] font-semibold tracking-tight sm:text-5xl">{job.title}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">{job.summary}</p>
+          {!open && (
+            <p role="status" className="mt-6 max-w-2xl rounded-xl bg-warning-50 p-4 font-medium text-warning-800 ring-1 ring-warning-200">
+              This role is no longer accepting applications. See our other open roles below.
+            </p>
+          )}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href={applyHref(job.slug)} size="lg" arrow>
-              Apply Now
-            </ButtonLink>
-            <ButtonLink href="/careers" size="lg" variant="secondary">
+            {open && (
+              <ButtonLink href={applyHref(job.slug)} size="lg" arrow>
+                Apply Now
+              </ButtonLink>
+            )}
+            <ButtonLink href="/careers" size="lg" variant={open ? "secondary" : "primary"}>
               All Open Roles
             </ButtonLink>
           </div>
@@ -115,8 +129,8 @@ export default async function JobPage({ params }: PageProps<"/careers/[slug]">) 
 
             <p className="rounded-xl bg-paper p-4 text-sm leading-relaxed text-slate-600 ring-1 ring-line">
               This description reflects our current thinking about the role and may be refined as we talk with
-              candidates. This role is open to candidates outside the United States. All terms are confirmed in writing
-              before any offer.
+              candidates.{job.facts.location?.includes("outside the United States") ? " This role is open to candidates outside the United States." : ""}{" "}
+              All terms are confirmed in writing before any offer.
             </p>
           </article>
 
@@ -136,37 +150,41 @@ export default async function JobPage({ params }: PageProps<"/careers/[slug]">) 
                   ))}
                 </ul>
               </div>
-              <div className="border-t border-line pt-6">
-                <ButtonLink href={applyHref(job.slug)} className="w-full" arrow>
-                  Apply for This Role
-                </ButtonLink>
-              </div>
+              {open && (
+                <div className="border-t border-line pt-6">
+                  <ButtonLink href={applyHref(job.slug)} className="w-full" arrow>
+                    Apply for This Role
+                  </ButtonLink>
+                </div>
+              )}
             </div>
           </aside>
         </Container>
       </Section>
 
-      <Section tone="mist" labelledBy="other-roles-heading">
-        <Container>
-          <h2 id="other-roles-heading" className="text-2xl font-semibold tracking-tight">
-            Other open roles
-          </h2>
-          <ul className="mt-6 grid gap-4 md:grid-cols-2">
-            {otherJobs.map((j) => (
-              <li key={j.slug}>
-                <Link
-                  href={`/careers/${j.slug}`}
-                  className="flex h-full flex-col rounded-2xl bg-white p-5 ring-1 ring-line transition-shadow hover:shadow-card"
-                >
-                  <span className="font-semibold text-navy-900">{j.title}</span>
-                  <span className="mt-1 text-sm text-slate-600">{j.summary}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Container>
-      </Section>
-      <JsonLd data={jobPostingJsonLd(job)} />
+      {otherJobs.length > 0 && (
+        <Section tone="mist" labelledBy="other-roles-heading">
+          <Container>
+            <h2 id="other-roles-heading" className="text-2xl font-semibold tracking-tight">
+              Other open roles
+            </h2>
+            <ul className="mt-6 grid gap-4 md:grid-cols-2">
+              {otherJobs.map((j) => (
+                <li key={j.slug}>
+                  <Link
+                    href={`/careers/${j.slug}`}
+                    className="flex h-full flex-col rounded-2xl bg-white p-5 ring-1 ring-line transition-shadow hover:shadow-card"
+                  >
+                    <span className="font-semibold text-navy-900">{j.title}</span>
+                    <span className="mt-1 text-sm text-slate-600">{j.summary}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </Section>
+      )}
+      {open && <JsonLd data={jobPostingJsonLd(job)} />}
     </>
   );
 }

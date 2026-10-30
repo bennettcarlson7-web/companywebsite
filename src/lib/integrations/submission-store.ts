@@ -1,11 +1,10 @@
-import { appendFile, mkdir } from "node:fs/promises";
-import path from "node:path";
+import { createRedis, type Redis } from "@/lib/data/redis";
 import type { IntakeEnv } from "./env";
 
 /**
  * Durable record of every accepted submission — the website's own "applicant tracking" inbox, like the database
  * behind Greenhouse or Lever. A submission counts as received once it's saved here, even if email is down or not
- * configured. Email is a notification on top.
+ * configured. Email is a notification on top. The admin area reads the same records.
  */
 
 export type SubmissionKind = "inquiry" | "application";
@@ -18,64 +17,53 @@ export type StoredSubmission = {
 };
 
 export interface SubmissionStore {
-  readonly name: "file" | "upstash";
+  readonly name: Redis["name"];
   save(submission: StoredSubmission): Promise<void>;
 }
 
 /** Retention from the Privacy Policy (plus a small margin for "after the role closes"/"after last contact"). */
-const RETENTION_SECONDS: Record<SubmissionKind, number> = {
+export const RETENTION_SECONDS: Record<SubmissionKind, number> = {
   application: 13 * 31 * 24 * 3600,
   inquiry: 25 * 31 * 24 * 3600,
 };
 
-export const SUBMISSION_FILES: Record<SubmissionKind, string> = { application: "applications.jsonl", inquiry: "inquiries.jsonl" };
+/** Storage keys. The full record holds the résumé file; the summary omits it so lists stay small and fast. */
+export const submissionKeys = {
+  record: (kind: SubmissionKind, id: string) => `submission:${kind}:${id}`,
+  summary: (kind: SubmissionKind, id: string) => `submission-summary:${kind}:${id}`,
+  index: (kind: SubmissionKind) => `submissions:${kind}`,
+};
 
-/** Appends one JSON line per submission to `<dir>/applications.jsonl` or `inquiries.jsonl`, readable only by the server's user. */
-export class FileSubmissionStore implements SubmissionStore {
-  readonly name = "file" as const;
-  constructor(private dir: string) {}
+/** The record without file contents (a résumé keeps its name, type, and size). */
+export function summarize(s: StoredSubmission): StoredSubmission {
+  const resume = s.data.resume as { data?: unknown } | undefined;
+  if (!resume || typeof resume !== "object" || !("data" in resume)) return s;
+  const { data: _file, ...meta } = resume; // eslint-disable-line @typescript-eslint/no-unused-vars
+  return { ...s, data: { ...s.data, resume: meta } };
+}
+
+/** One record + one summary per submission, each with the retention TTL, plus a time-ordered index per kind. */
+export class RedisSubmissionStore implements SubmissionStore {
+  constructor(private redis: Redis) {}
+
+  get name() {
+    return this.redis.name;
+  }
 
   async save(s: StoredSubmission): Promise<void> {
-    // Runtime data directory, not source: keep it out of Next.js output-file tracing.
-    await mkdir(/*turbopackIgnore: true*/ this.dir, { recursive: true, mode: 0o700 });
-    await appendFile(path.join(/*turbopackIgnore: true*/ this.dir, SUBMISSION_FILES[s.kind]), `${JSON.stringify(s)}\n`, {
-      encoding: "utf8",
-      mode: 0o600,
-    });
+    const ttl = RETENTION_SECONDS[s.kind];
+    await this.redis.exec([
+      ["SET", submissionKeys.record(s.kind, s.id), JSON.stringify(s), "EX", ttl],
+      ["SET", submissionKeys.summary(s.kind, s.id), JSON.stringify(summarize(s)), "EX", ttl],
+      ["ZADD", submissionKeys.index(s.kind), Date.parse(s.receivedAt), s.id],
+    ]);
   }
 }
 
-/** Upstash Redis (REST): one key per submission with retention TTL, plus a time-ordered index per kind. */
-export class UpstashSubmissionStore implements SubmissionStore {
-  readonly name = "upstash" as const;
-  constructor(
-    private url: string,
-    private token: string,
-    private fetchImpl: typeof fetch = fetch,
-  ) {}
-
-  async save(s: StoredSubmission): Promise<void> {
-    const key = `submission:${s.kind}:${s.id}`;
-    const res = await this.fetchImpl(`${this.url.replace(/\/$/, "")}/pipeline`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${this.token}`, "Content-Type": "application/json" },
-      body: JSON.stringify([
-        ["SET", key, JSON.stringify(s), "EX", String(RETENTION_SECONDS[s.kind])],
-        ["ZADD", `submissions:${s.kind}`, String(Date.parse(s.receivedAt)), s.id],
-      ]),
-      cache: "no-store",
-    });
-    if (!res.ok) throw new Error(`upstash_${res.status}`);
-    const results = (await res.json()) as { error?: string }[];
-    if (results.some((r) => r.error)) throw new Error("upstash_command_error");
-  }
-}
-
-/** Upstash when configured (works on serverless); otherwise the local directory; otherwise none. */
+/** Upstash when configured (works on serverless); otherwise the local file store; otherwise none. */
 export function createSubmissionStore(env: IntakeEnv): SubmissionStore | undefined {
-  if (env.upstashUrl && env.upstashToken) return new UpstashSubmissionStore(env.upstashUrl, env.upstashToken);
-  if (env.submissionsDir) return new FileSubmissionStore(path.resolve(/*turbopackIgnore: true*/ env.submissionsDir));
-  return undefined;
+  const redis = createRedis(env);
+  return redis ? new RedisSubmissionStore(redis) : undefined;
 }
 
 /** Saves a submission, reporting only success or an error code (never content). */

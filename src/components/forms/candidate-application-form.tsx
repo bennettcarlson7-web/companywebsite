@@ -3,7 +3,6 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode, type RefObject } from "react";
 import Link from "next/link";
 import { CircleCheck, Copy, FileText, Mail, TriangleAlert, Upload, X } from "lucide-react";
-import { getJob, getJobs } from "@/content/jobs";
 import {
   APPLICATION_LIMITS,
   applicationFieldErrors,
@@ -55,15 +54,19 @@ const fieldLabels: Record<ApplicationField, string> = {
 const VIDEO_HINT =
   "Please record a 1–2 minute video introducing yourself, highlighting your professional background, relevant experience, and why you're interested in joining our team.";
 
-function applicationEmailSubject(roleSlug?: string): string {
-  return emailSubjects.application((roleSlug && getJob(roleSlug)?.title) || "General interest");
+export type RoleOption = { slug: string; title: string };
+
+const titleOf = (roles: RoleOption[], slug?: string) => roles.find((r) => r.slug === slug)?.title;
+
+function applicationEmailSubject(roles: RoleOption[], roleSlug?: string): string {
+  return emailSubjects.application(titleOf(roles, roleSlug) || "General interest");
 }
 
 const fileSize = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 
-function summaryText(a: Application) {
+function summaryText(a: Application, roles: RoleOption[]) {
   return [
-    `Role: ${getJob(a.role)?.title ?? a.role}`,
+    `Role: ${titleOf(roles, a.role) ?? a.role}`,
     `Name: ${a.name}`,
     `Email: ${a.email}`,
     `Phone: ${a.phone}`,
@@ -112,17 +115,20 @@ const getServerSearch = () => "";
 export function CandidateApplicationForm({
   hiringEmail,
   countries,
+  roles,
 }: {
   hiringEmail: string;
   /** Country picker options, named on the server so server and browser render identical text. */
   countries: { code: string; name: string }[];
+  /** Roles currently accepting applications (managed in the admin area). */
+  roles: RoleOption[];
 }) {
   const formId = useId();
   const summaryRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const search = useSyncExternalStore(subscribe, getSearch, getServerSearch);
   const requested = new URLSearchParams(search).get("role") ?? "";
-  const presetRole = getJob(requested) ? requested : "";
+  const presetRole = titleOf(roles, requested) ? requested : "";
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const role = selectedRole ?? presetRole;
 
@@ -196,7 +202,7 @@ export function CandidateApplicationForm({
         <CircleCheck aria-hidden="true" className="size-10 text-success-700" />
         <h2 className="mt-4 text-2xl font-semibold">Thanks — we received your application.</h2>
         <p className="mt-3 leading-relaxed text-slate-700">
-          Your application for <strong>{getJob(submitted?.role ?? "")?.title}</strong> is with our team. We&apos;ll reply
+          Your application for <strong>{titleOf(roles, submitted?.role)}</strong> is with our team. We&apos;ll reply
           to <strong>{submitted?.email}</strong>. We read every application, though we can&apos;t promise an interview.
         </p>
         <Link href="/careers" className={buttonClasses({ variant: "secondary", className: "mt-6" })}>
@@ -208,7 +214,7 @@ export function CandidateApplicationForm({
 
   const showUnconfigured = status === "unconfigured" && submitted !== null;
   const emailFallback = (
-    <a href={mailtoHref(hiringEmail, applicationEmailSubject(role))} className="font-medium underline">
+    <a href={mailtoHref(hiringEmail, applicationEmailSubject(roles, role))} className="font-medium underline">
       email your application instead
     </a>
   );
@@ -216,7 +222,7 @@ export function CandidateApplicationForm({
   return (
     <>
       {showUnconfigured && (
-        <UnconfiguredPanel resultRef={resultRef} application={submitted} hiringEmail={hiringEmail} onBack={() => setStatus("idle")} />
+        <UnconfiguredPanel resultRef={resultRef} application={submitted} hiringEmail={hiringEmail} roles={roles} onBack={() => setStatus("idle")} />
       )}
       <form
         onSubmit={onSubmit}
@@ -241,7 +247,7 @@ export function CandidateApplicationForm({
               <option value="" disabled>
                 Choose a role…
               </option>
-              {getJobs().map((j) => (
+              {roles.map((j) => (
                 <option key={j.slug} value={j.slug}>
                   {j.title}
                 </option>
@@ -470,16 +476,18 @@ function UnconfiguredPanel({
   resultRef,
   application,
   hiringEmail,
+  roles,
   onBack,
 }: {
   resultRef: RefObject<HTMLDivElement | null>;
   application: Application;
   hiringEmail: string;
+  roles: RoleOption[];
   onBack: () => void;
 }) {
   const [copied, setCopied] = useState<"idle" | "copied" | "failed">("idle");
-  const text = summaryText(application);
-  const mailto = mailtoHref(hiringEmail, applicationEmailSubject(application.role), text.slice(0, 1800));
+  const text = summaryText(application, roles);
+  const mailto = mailtoHref(hiringEmail, applicationEmailSubject(roles, application.role), text.slice(0, 1800));
 
   async function copy() {
     try {

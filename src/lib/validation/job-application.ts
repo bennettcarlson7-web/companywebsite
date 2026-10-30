@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { jobs } from "@/content/jobs";
 import { countryCodes } from "@/lib/countries";
 import { consentField, emailField, nameField, singleLine, toFieldErrors, type SubmissionResponse } from "./shared";
 
@@ -58,7 +57,11 @@ const resumeField = z
     return { filename, contentType: format.contentType, size, data: v.data };
   });
 
-const jobSlugs = jobs.map((j) => j.slug) as [string, ...string[]];
+/** URL-safe role identifier. Whether the role is open is checked on the server against the live job list. */
+export const roleSlugField = z
+  .string({ error: "Please choose the role you're applying for." })
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { error: "Please choose the role you're applying for." })
+  .max(100);
 
 /** Voluntary self-identification. Empty or "decline" both mean the candidate chose not to answer. */
 export const genderOptions = [
@@ -147,7 +150,7 @@ export const applicationSchema = z.object({
   country: z.enum(countryCodes as [string, ...string[]], { error: "Please choose the country you live in." }),
   gender: optionalChoice(genderOptions, "Please choose one of the listed options."),
   ageRange: optionalChoice(ageRangeOptions, "Please choose one of the listed options."),
-  role: z.enum(jobSlugs, { error: "Please choose the role you're applying for." }),
+  role: roleSlugField,
   resume: resumeField,
   videoUrl: safeLink("video").pipe(z.string({ error: "Please add a link to your 1–2 minute introduction video." })),
   linkedinUrl: safeLink("LinkedIn", {

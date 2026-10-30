@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getJobs } from "@/content/jobs";
+import { getOpenJobs } from "@/lib/data/jobs";
 import { emailSubjects, getCareersEmail, mailtoHref, siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
 import { Container, Section } from "@/components/ui/primitives";
@@ -18,7 +18,9 @@ export const metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function ApplyPage() {
+export default async function ApplyPage() {
+  const jobs = await getOpenJobs();
+  const roles = jobs.map((j) => ({ slug: j.slug, title: j.title }));
   return (
     <>
       <section className="border-b border-line bg-gradient-to-b from-mist to-white">
@@ -41,14 +43,14 @@ export default function ApplyPage() {
         <Container className="grid gap-10 lg:grid-cols-12">
           <div className="rounded-[1.75rem] bg-white p-6 shadow-card ring-1 ring-line sm:p-8 lg:col-span-8">
             <h2 className="mb-6 text-2xl font-semibold tracking-tight">Your application</h2>
-            <CandidateApplicationForm hiringEmail={getCareersEmail()} countries={countries} />
+            <CandidateApplicationForm hiringEmail={getCareersEmail()} countries={countries} roles={roles} />
           </div>
 
           <aside className="space-y-6 lg:col-span-4">
             <div className="rounded-2xl bg-mist p-6 ring-1 ring-cobalt-100">
               <h2 className="text-lg font-semibold">Open roles</h2>
               <ul className="mt-3 space-y-2">
-                {getJobs().map((j) => (
+                {jobs.map((j) => (
                   <li key={j.slug}>
                     <Link href={`/careers/${j.slug}`} className="text-sm font-medium text-cobalt-700 hover:underline">
                       {j.title}

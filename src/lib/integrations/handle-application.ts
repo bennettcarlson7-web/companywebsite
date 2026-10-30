@@ -1,4 +1,5 @@
-import { getJob } from "@/content/jobs";
+import { isOpen, readJobs, type ManagedJob } from "@/lib/data/jobs";
+import { createRedis } from "@/lib/data/redis";
 import { emailSubjects, siteConfig } from "@/lib/site-config";
 import { countryName } from "@/lib/countries";
 import {
@@ -27,6 +28,8 @@ export type ApplicationDeps = {
   store?: SubmissionStore;
   log?: Logger;
   delivered?: DeliveredSubmissions;
+  /** Test hook: the live job list. Defaults to the jobs stored for this environment (or the seed roles). */
+  loadJobs?: () => Promise<ManagedJob[]>;
 };
 
 export type ApplicationResult = { httpStatus: number; body: ApplicationResponse; headers?: Record<string, string> };
@@ -43,8 +46,7 @@ const locationLabel = (app: Application) => `${app.city}, ${countryName(app.coun
 const genderLabel = (app: Application) => (app.gender === "decline" ? "Not disclosed" : labelFor(genderOptions, app.gender));
 const ageLabel = (app: Application) => (app.ageRange === "decline" ? "Not disclosed" : labelFor(ageRangeOptions, app.ageRange));
 
-export function formatApplicationText(app: Application): string {
-  const role = getJob(app.role)?.title ?? app.role;
+export function formatApplicationText(app: Application, role: string): string {
   return [
     `Role: ${role}`,
     `Name: ${app.name}`,
@@ -60,8 +62,7 @@ export function formatApplicationText(app: Application): string {
   ].join("\n");
 }
 
-export function buildApplicationEmail(app: Application) {
-  const role = getJob(app.role)?.title ?? app.role;
+export function buildApplicationEmail(app: Application, role: string) {
   // Links are shown as escaped plain text (not anchors) so reviewers see exactly what was submitted.
   const html = renderNotificationHtml(
     `New application: ${role}`,
@@ -82,7 +83,7 @@ export function buildApplicationEmail(app: Application) {
     `Sent from the ${siteConfig.name} careers application form. Candidate data: restrict access to the hiring team and follow the documented retention policy.`,
   );
   const attachments = [{ filename: app.resume.filename, contentType: app.resume.contentType, content: app.resume.data }];
-  return { subject: applicationSubject(role), html, text: formatApplicationText(app), attachments };
+  return { subject: applicationSubject(role), html, text: formatApplicationText(app, role), attachments };
 }
 
 /** Candidate application: shared guard → application schema → saved + emailed to the hiring inbox (never the CRM). */
@@ -109,6 +110,23 @@ export async function handleApplication(req: SubmissionRequest, deps: Applicatio
     return { httpStatus: 200, body: { status: "sent" } };
   }
 
+  // The live job list is the source of truth: a role withdrawn in the admin stops accepting applications at once.
+  let job: ManagedJob | undefined;
+  try {
+    job = (await (deps.loadJobs ?? (() => readJobs(createRedis(deps.env))))()).find((j) => j.slug === parsed.data.role);
+  } catch {
+    log({ outcome: "jobs_unavailable" });
+    return { httpStatus: 502, body: { status: "error" } };
+  }
+  if (!job || !isOpen(job)) {
+    log({ outcome: "invalid", reason: "role_not_open" });
+    const message = job
+      ? "This role is no longer accepting applications. Please choose another role."
+      : "Please choose the role you're applying for.";
+    return { httpStatus: 422, body: { status: "invalid", fieldErrors: { role: message } } };
+  }
+  const roleTitle = job.title;
+
   const emailConfigured = isApplicationDeliveryConfigured(deps.env);
   if (!deps.store && !emailConfigured) {
     log({ outcome: "unconfigured", role: parsed.data.role });
@@ -121,11 +139,11 @@ export async function handleApplication(req: SubmissionRequest, deps: Applicatio
     id: guard.submissionId ?? crypto.randomUUID(),
     kind: "application",
     receivedAt: new Date().toISOString(),
-    data: { ...parsed.data, roleTitle: getJob(parsed.data.role)?.title ?? parsed.data.role, countryName: countryName(parsed.data.country) },
+    data: { ...parsed.data, roleTitle, countryName: countryName(parsed.data.country) },
   });
   let emailed: Awaited<ReturnType<typeof sendEmail>> | null = null;
   if (emailConfigured) {
-    const { subject, html, text, attachments } = buildApplicationEmail(parsed.data);
+    const { subject, html, text, attachments } = buildApplicationEmail(parsed.data, roleTitle);
     emailed = await sendEmail(
       { to: deps.env.hiringTo, replyTo: parsed.data.email, subject, html, text, attachments },
       deps.env,
@@ -142,7 +160,6 @@ export async function handleApplication(req: SubmissionRequest, deps: Applicatio
   log({ outcome: "sent", role: parsed.data.role, channels: [stored?.ok && "store", emailed?.ok && "email"].filter(Boolean) });
   if (!emailed?.ok) return { httpStatus: 200, body: { status: "sent" } };
 
-  const roleTitle = getJob(parsed.data.role)?.title ?? parsed.data.role;
   const confirmation = await sendConfirmation(
     buildApplicationConfirmation(parsed.data.name, parsed.data.email, roleTitle, deps.env),
     deps.env,

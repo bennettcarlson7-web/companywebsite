@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getTeam, initialsOf } from "@/content/team";
-import { getJobs, UNCONFIRMED_DETAIL } from "@/content/jobs";
+import { seedJobs, UNCONFIRMED_DETAIL } from "@/content/jobs";
 import { getProjects } from "@/content/projects";
 import { articleMeta, todayInUsPacific } from "@/content/insights/meta";
 import { brandOwnershipStatement, brandWithEntity, company, copyrightHolder, operatorName, siteConfig } from "@/lib/site-config";
@@ -26,12 +26,12 @@ describe("owner-supplied facts", () => {
   });
 
   it("lists exactly the three recruiting priorities", () => {
-    expect(getJobs().map((j) => j.title)).toEqual([
+    expect(seedJobs.map((j) => j.title)).toEqual([
       "Senior Software Engineer — AI/ML",
       "Senior Software Engineer — Data Engineering",
       "Talent Recruiter",
     ]);
-    expect(getJobs().map((j) => j.slug)).toEqual([
+    expect(seedJobs.map((j) => j.slug)).toEqual([
       "senior-software-engineer-ai-ml",
       "senior-software-engineer-data-engineering",
       "talent-recruiter",
@@ -39,7 +39,7 @@ describe("owner-supplied facts", () => {
   });
 
   it("shows exactly the owner-confirmed job terms, excluding the U.S.", () => {
-    for (const job of getJobs()) {
+    for (const job of seedJobs) {
       expect(job.facts).toEqual({
         location: "Remote — worldwide (outside the United States)",
         workplace: "Remote",

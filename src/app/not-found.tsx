@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/primitives";
+import { Header, SkipLink } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -15,7 +17,21 @@ const suggestions = [
   { label: "Contact", href: "/contact" },
 ];
 
+// The root not-found renders under the root layout only, so it brings its own public header and footer.
 export default function NotFound() {
+  return (
+    <>
+      <SkipLink />
+      <Header />
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">
+        <NotFoundContent />
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+function NotFoundContent() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-mist to-white">
       <div aria-hidden="true" className="bg-grid absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
