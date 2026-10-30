@@ -11,7 +11,7 @@ import { countries } from "@/lib/countries";
 export const metadata = {
   ...buildMetadata({
     title: "Apply — Careers",
-    description: `Apply to join ${siteConfig.name}. Upload your résumé and share a short introduction video.`,
+    description: `Apply to join ${siteConfig.name}. Upload your résumé and, if you like, share a short introduction video.`,
     path: "/careers/apply",
   }),
   // A form page has no search value of its own; the job pages are what should be indexed.
@@ -34,7 +34,7 @@ export default async function ApplyPage() {
           <h1 className="mt-8 text-4xl font-semibold tracking-tight sm:text-5xl">Apply to join {siteConfig.name}</h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600">
             This is our careers application — separate from project inquiries. It takes a few minutes: tell us who you
-            are, upload your résumé, and share a short introduction video.
+            are, upload your résumé, and, if you like, share a short introduction video.
           </p>
         </Container>
       </section>

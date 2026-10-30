@@ -165,4 +165,12 @@ describe("buildApplicationEmail", () => {
     expect(html).toContain("https://github.com/example");
     expect(text).toContain("Introduction video: https://evil.example/");
   });
+
+  it("says the introduction video was not provided when it's left out", () => {
+    const app = applicationSchema.parse({ ...validApplication, videoUrl: "" });
+    const { html, text } = buildApplicationEmail(app, "Talent Recruiter");
+    expect(text).toContain("Introduction video: Not provided");
+    expect(html).toContain("Not provided");
+    expect(html).not.toContain("undefined");
+  });
 });

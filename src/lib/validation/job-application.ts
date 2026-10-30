@@ -152,7 +152,7 @@ export const applicationSchema = z.object({
   ageRange: optionalChoice(ageRangeOptions, "Please choose one of the listed options."),
   role: roleSlugField,
   resume: resumeField,
-  videoUrl: safeLink("video").pipe(z.string({ error: "Please add a link to your 1–2 minute introduction video." })),
+  videoUrl: safeLink("video"),
   linkedinUrl: safeLink("LinkedIn", {
     test: (h) => h === "linkedin.com" || h.endsWith(".linkedin.com"),
     message: "Please enter a linkedin.com profile link.",

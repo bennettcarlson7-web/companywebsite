@@ -156,13 +156,13 @@ describe("CandidateApplicationForm", () => {
     expect(sentBody(fetchFn).payload.resume).toMatchObject({ name: "Sam Okafor CV.pdf", data: expect.stringMatching(/^JVBERi/) });
   });
 
-  it("asks for a résumé and a video link, with the recording guidance, and no written introduction", async () => {
+  it("requires a résumé, offers an optional video link with the recording guidance, and no written introduction", async () => {
     const fetchFn = mockFetch(200, { status: "sent" });
     const user = userEvent.setup();
     render(<CandidateApplicationForm hiringEmail={CAREERS_EMAIL} countries={countries} roles={roles} />);
     expect(screen.getByText(/please record a 1–2 minute video introducing yourself/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/introduce yourself/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/video link/i)).toBeRequired();
+    expect(screen.getByLabelText(/video link/i)).not.toBeRequired();
     expect(screen.getByLabelText(/linkedin profile/i)).toBeRequired();
     for (const label of [/^phone/i, /^city/i, /^country/i]) expect(screen.getByLabelText(label)).toBeRequired();
     for (const label of [/^gender/i, /^age range/i]) {
@@ -172,7 +172,7 @@ describe("CandidateApplicationForm", () => {
     await user.click(screen.getByRole("button", { name: /submit application/i }));
     const summary = await screen.findByRole("alert");
     expect(summary).toHaveTextContent(/résumé/i);
-    expect(summary).toHaveTextContent(/candidate introduction video/i);
+    expect(summary).not.toHaveTextContent(/candidate introduction video/i);
     expect(fetchFn).not.toHaveBeenCalled();
   });
 

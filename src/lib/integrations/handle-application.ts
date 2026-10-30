@@ -56,7 +56,7 @@ export function formatApplicationText(app: Application, role: string): string {
     `Gender: ${genderLabel(app)}`,
     `Age range: ${ageLabel(app)}`,
     `Résumé: ${resumeLabel(app)}`,
-    `Introduction video: ${app.videoUrl}`,
+    `Introduction video: ${app.videoUrl ?? "Not provided"}`,
     `LinkedIn: ${app.linkedinUrl}`,
     `Portfolio / GitHub: ${app.portfolioUrl ?? "Not provided"}`,
   ].join("\n");
@@ -79,7 +79,7 @@ export function buildApplicationEmail(app: Application, role: string) {
       ["Portfolio / GitHub", app.portfolioUrl ?? "Not provided"],
     ],
     "Introduction video",
-    app.videoUrl,
+    app.videoUrl ?? "Not provided",
     `Sent from the ${siteConfig.name} careers application form. Candidate data: restrict access to the hiring team and follow the documented retention policy.`,
   );
   const attachments = [{ filename: app.resume.filename, contentType: app.resume.contentType, content: app.resume.data }];

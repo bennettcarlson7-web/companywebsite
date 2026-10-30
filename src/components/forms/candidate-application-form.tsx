@@ -72,7 +72,7 @@ function summaryText(a: Application, roles: RoleOption[]) {
     `Phone: ${a.phone}`,
     `Location: ${a.city}, ${a.country}`,
     `Résumé: ${a.resume.filename} (please attach it to your email)`,
-    `Introduction video: ${a.videoUrl}`,
+    `Introduction video: ${a.videoUrl ?? "Not provided"}`,
     `LinkedIn: ${a.linkedinUrl}`,
     `Portfolio / GitHub: ${a.portfolioUrl ?? "Not provided"}`,
   ].join("\n");
@@ -376,12 +376,11 @@ export function CandidateApplicationForm({
           </Field>
         </FormSection>
 
-        <FormSection step={3} title="Candidate Introduction Video">
+        <FormSection step={3} title="Candidate Introduction Video (optional)">
           <Field
             id={fid("videoUrl")}
             label="Video link"
-            required
-            hint={`${VIDEO_HINT} Paste a link to it (YouTube unlisted, Loom, Google Drive, etc.) and make sure anyone with the link can view it.`}
+            hint={`Optional. ${VIDEO_HINT} Paste a link to it (YouTube unlisted, Loom, Google Drive, etc.) and make sure anyone with the link can view it.`}
             error={errors.videoUrl}
           >
             <input
@@ -389,7 +388,6 @@ export function CandidateApplicationForm({
               type="url"
               inputMode="url"
               placeholder="https://"
-              required
               maxLength={APPLICATION_LIMITS.url}
               {...inputProps(fid("videoUrl"), errors.videoUrl)}
             />

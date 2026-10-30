@@ -33,7 +33,7 @@ export default function PrivacyPage() {
       <p>
         <strong>Job applications.</strong> When you apply for a role, we collect your name, email, the role you&apos;re
         applying for, your phone number, the city and country you live in, your LinkedIn profile link, the résumé file
-        you upload, a link to your introduction video, and an optional portfolio or GitHub link. You may also choose to
+        you upload, and, if you choose, a link to your introduction video and a portfolio or GitHub link. You may also choose to
         share your gender and age range; both are voluntary, &ldquo;Decline to self-identify&rdquo; is always
         available, and these answers are not used to make hiring decisions. If you answer, they are kept with your
         application. While we review it, our hiring team may record its status and brief job-related notes, which are

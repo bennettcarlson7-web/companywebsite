@@ -179,7 +179,7 @@ test.describe("careers flow", () => {
     await page.getByLabel(/^LinkedIn profile/).fill("https://www.linkedin.com/in/sam-okafor");
     await page.getByLabel(/^Gender/).selectOption("man");
     await expect(summary).toContainText("Résumé");
-    await expect(summary).toContainText("Candidate Introduction Video:");
+    await expect(summary).not.toContainText("Candidate Introduction Video");
     await expect(page.getByLabel(/^Introduce yourself/)).toHaveCount(0);
     await page.getByLabel(/^Upload your résumé/).setInputFiles({
       name: "Sam Okafor CV.pdf",

@@ -38,7 +38,7 @@ export default async function CareersPage() {
               id="roles-heading"
               eyebrow={jobs.length === 1 ? "1 open role" : `${jobs.length} open roles`}
               title="Roles we're recruiting for"
-              description="Each role has its own page with the details. Applying takes a few minutes — your résumé and a short introduction video are all we ask for."
+              description="Each role has its own page with the details. Applying takes a few minutes — your résumé is all we require, and a short introduction video is welcome."
             />
           </div>
           {jobs.length > 0 ? (

@@ -17,7 +17,7 @@ describe("applicationSchema (candidate applications)", () => {
     expect(result.resume).toMatchObject({ filename: "Sam Okafor CV.pdf", contentType: "application/pdf" });
   });
 
-  it("requires name, email, LinkedIn, role, résumé, introduction video, and consent", () => {
+  it("requires name, email, LinkedIn, role, résumé, and consent; the introduction video is optional", () => {
     const errors = errorsFor({ name: "", email: "", role: "", videoUrl: "", linkedinUrl: "", consent: false });
     expect(Object.keys(errors).sort()).toEqual([
       "city",
@@ -29,13 +29,12 @@ describe("applicationSchema (candidate applications)", () => {
       "phone",
       "resume",
       "role",
-      "videoUrl",
     ]);
     expect(errorsFor({ ...validApplication, linkedinUrl: "" }).linkedinUrl).toMatch(/LinkedIn profile link/);
-    expect(errorsFor({ ...validApplication, videoUrl: "" }).videoUrl).toMatch(/introduction video/);
+    expect(applicationSchema.parse({ ...validApplication, videoUrl: "" }).videoUrl).toBeUndefined();
     const withoutVideo: Partial<typeof validApplication> = { ...validApplication };
     delete withoutVideo.videoUrl;
-    expect(errorsFor(withoutVideo).videoUrl).toMatch(/introduction video/);
+    expect(applicationSchema.parse(withoutVideo).videoUrl).toBeUndefined();
   });
 
   it("accepts international phone numbers and rejects malformed ones", () => {
