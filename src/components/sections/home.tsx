@@ -10,6 +10,8 @@ import { Reveal } from "@/components/ui/reveal";
 import { HeroVisual } from "@/components/visuals/hero-visual";
 import { TeamAvatar } from "@/components/team/team-card";
 import { getLeadership } from "@/content/team";
+import { getProducts, productsHeading, productsIntro } from "@/content/products";
+import { ProductCard } from "@/components/products/product-ui";
 import { ArticleCard, ProjectCard, ServiceCard } from "./cards";
 
 export function HomeHero() {
@@ -94,6 +96,31 @@ export function WhatWeDo() {
             {getServices().map((service) => (
               <li key={service.slug}>
                 <ServiceCard service={service} />
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      </Container>
+    </Section>
+  );
+}
+
+export function ProductsShowcase() {
+  return (
+    <Section tone="mist" labelledBy="products-home-heading">
+      <Container>
+        <SectionHeader
+          id="products-home-heading"
+          eyebrow={`${siteConfig.name} Products`}
+          title={productsHeading(siteConfig.name)}
+          description={`${productsIntro} See the AI products we're building in-house — what each one does, and exactly where it stands.`}
+          action={<TextLink href="/work#products">See our products</TextLink>}
+        />
+        <Reveal>
+          <ul className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {getProducts().map((product) => (
+              <li key={product.slug}>
+                <ProductCard product={product} />
               </li>
             ))}
           </ul>

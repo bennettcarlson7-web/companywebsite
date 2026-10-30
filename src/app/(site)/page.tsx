@@ -9,6 +9,7 @@ import {
   FounderStory,
   HomeHero,
   InsightsPreview,
+  ProductsShowcase,
   RecruitingAnnouncement,
   WhatWeDo,
   WhyUs,
@@ -31,6 +32,7 @@ export default function HomePage() {
       <HomeHero />
       <DifferentiatorStrip />
       <WhatWeDo />
+      <ProductsShowcase />
       <Audiences />
       <FeaturedWork />
       <WhyUs />

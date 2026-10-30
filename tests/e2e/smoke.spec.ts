@@ -24,6 +24,9 @@ const routes = [
   "/services/system-integration-modernization",
   "/services/dedicated-engineering-teams",
   "/work",
+  "/work/clientflow-ai",
+  "/work/commercepilot-ai",
+  "/work/fieldops-ai",
   "/work/operations-dashboard",
   "/work/ai-intake-follow-up-agent",
   "/work/ai-ready-data-platform",
@@ -140,6 +143,33 @@ test.describe("business facts as rendered", () => {
     }
     await page.goto("/careers");
     await expect(page.getByRole("link", { name: "Email our hiring team" })).toHaveAttribute("href", new RegExp(`^mailto:${CAREERS_EMAIL}`));
+  });
+
+  test("the Work page presents our products honestly as in development, with design previews and no demo yet", async ({ page }) => {
+    await page.goto("/work");
+    const products = page.getByRole("region", { name: "What We're Building" });
+    await expect(products.getByText("Real products. Practical engineering. Solutions designed around business problems.")).toBeVisible();
+    for (const name of ["ClientFlow AI", "CommercePilot AI", "FieldOps AI"]) {
+      await expect(products.getByRole("heading", { level: 3, name, exact: true })).toBeVisible();
+    }
+    await expect(products.getByText(/design preview of ClientFlow AI/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /view demo/i })).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 2, name: "How we'd approach common problems" })).toBeVisible();
+
+    await page.getByRole("link", { name: "Explore ClientFlow AI" }).click();
+    await expect(page).toHaveURL("/work/clientflow-ai");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("ClientFlow AI");
+    await expect(page.getByText("In development").first()).toBeVisible();
+    for (const h of ["Client work gets lost between the inbox and the project", "ClientFlow AI, step by step", "What it does", "Where it stands"]) {
+      await expect(page.getByRole("heading", { level: 2, name: h })).toBeVisible();
+    }
+    await expect(page.getByRole("link", { name: /get early access/i }).first()).toHaveAttribute("href", /^mailto:/);
+
+    await page.goto("/");
+    const section = page.getByRole("region", { name: "What We're Building" });
+    await expect(section.getByRole("article")).toHaveCount(3);
+    await section.getByRole("link", { name: "See our products" }).click();
+    await expect(page).toHaveURL("/work#products");
   });
 
   test("concept projects are labeled as illustrative and not client work", async ({ page }) => {

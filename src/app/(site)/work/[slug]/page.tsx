@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import type { Project } from "@/types/content";
 import { getProject, getProjects } from "@/content/projects";
+import { getProduct, getProducts } from "@/content/products";
+import { ProductDetail } from "@/components/products/product-detail";
 import { getService } from "@/content/services";
 import { siteConfig } from "@/lib/site-config";
 import { buildMetadata } from "@/lib/seo";
@@ -15,23 +18,33 @@ import { ProjectVisual } from "@/components/visuals/project-visual";
 // Fully prerendered from generateStaticParams; unknown slugs render the 404 page.
 export const ensureStatic = "navigation";
 
+// /work/<slug> serves both our own products and concept projects (slugs are unique across both; see tests).
 export function generateStaticParams() {
-  return getProjects().map((p) => ({ slug: p.slug }));
+  return [...getProducts(), ...getProjects()].map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/work/[slug]">): Promise<Metadata> {
   const { slug } = await params;
+  const product = getProduct(slug);
+  if (product) {
+    return buildMetadata({ title: `${product.name} — ${product.category}`, description: product.seoDescription, path: `/work/${slug}` });
+  }
   const project = getProject(slug);
   if (!project) return {};
   const prefix = project.kind === "concept" ? "Concept: " : "";
   return buildMetadata({ title: `${prefix}${project.title}`, description: project.seoDescription, path: `/work/${slug}` });
 }
 
-export default async function ProjectPage({ params }: PageProps<"/work/[slug]">) {
+export default async function WorkItemPage({ params }: PageProps<"/work/[slug]">) {
   const { slug } = await params;
+  const product = getProduct(slug);
+  if (product) return <ProductDetail product={product} />;
   const project = getProject(slug);
   if (!project) notFound();
+  return <ProjectDetail project={project} />;
+}
 
+function ProjectDetail({ project }: { project: Project }) {
   const isConcept = project.kind === "concept";
   const services = project.relatedServices.map(getService).filter((s) => s !== undefined);
   const more = getProjects()

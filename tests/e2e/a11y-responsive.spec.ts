@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-const keyPages = ["/", "/about", "/careers", "/careers/senior-software-engineer-ai-ml", "/careers/apply?role=talent-recruiter", "/contact", "/work", "/privacy"];
+const keyPages = ["/", "/work", "/work/clientflow-ai", "/about", "/careers", "/careers/senior-software-engineer-ai-ml", "/careers/apply?role=talent-recruiter", "/contact", "/privacy"];
 
 test.describe("automated accessibility (axe, WCAG 2.0/2.1/2.2 A & AA rules)", () => {
   for (const path of keyPages) {
